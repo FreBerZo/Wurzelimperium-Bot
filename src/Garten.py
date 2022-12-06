@@ -138,18 +138,18 @@ class Garden():
             for field in range(1, self._nMaxFields + 1):
                 if planted == amount: break
             
-            fieldsToPlant = self._getAllFieldIDsFromFieldIDAndSizeAsIntList(field, sx, sy)
+                fieldsToPlant = self._getAllFieldIDsFromFieldIDAndSizeAsIntList(field, sx, sy)
             
-            if (self._isPlantGrowableOnField(field, emptyFields, fieldsToPlant, sx)):
-                fields = self._getAllFieldIDsFromFieldIDAndSizeAsString(field, sx, sy)
-                self._httpConn.growPlant(field, plantID, self._id, fields)
-                planted += 1
+                if (self._isPlantGrowableOnField(field, emptyFields, fieldsToPlant, sx)):
+                    fields = self._getAllFieldIDsFromFieldIDAndSizeAsString(field, sx, sy)
+                    self._httpConn.growPlant(field, plantID, self._id, fields)
+                    planted += 1
 
-                #Nach dem Anbau belegte Felder aus der Liste der leeren Felder loeschen
-                fieldsToPlantSet = set(fieldsToPlant)
-                emptyFieldsSet = set(emptyFields)
-                tmpSet = emptyFieldsSet - fieldsToPlantSet
-                emptyFields = list(tmpSet)
+                    #Nach dem Anbau belegte Felder aus der Liste der leeren Felder loeschen
+                    fieldsToPlantSet = set(fieldsToPlant)
+                    emptyFieldsSet = set(emptyFields)
+                    tmpSet = emptyFieldsSet - fieldsToPlantSet
+                    emptyFields = list(tmpSet)
 
         except:
             self._logGarden.error('Im Garten ' + str(self._id) + ' konnte nicht gepflanzt werden.')

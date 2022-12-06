@@ -76,16 +76,16 @@ class ProductData():
             if key == '999':
                 continue
 
-                name = dictProducts[key]['name'].replace('&nbsp;', ' ')
-                self.__products.append(Product(id        = int(key), \
-                                               cat       = dictProducts[key]['category'], \
-                                               sx        = dictProducts[key]['sx'], \
-                                               sy        = dictProducts[key]['sy'], \
-                                               name      = name.encode('utf-8'), \
-                                               lvl       = dictProducts[key]['level'], \
-                                               crop      = dictProducts[key]['crop'], \
-                                               plantable = dictProducts[key]['plantable'], \
-                                               time      = dictProducts[key]['time']))
+            name = dictProducts[key]['name'].replace('&nbsp;', ' ')
+            self.__products.append(Product(id=int(key),
+                                           cat=dictProducts[key]['category'],
+                                           sx=dictProducts[key]['sx'],
+                                           sy=dictProducts[key]['sy'],
+                                           name=name.encode('utf-8'),
+                                           lvl=dictProducts[key]['level'],
+                                           crop=dictProducts[key]['crop'],
+                                           plantable=dictProducts[key]['plantable'],
+                                           time=dictProducts[key]['time']))
                 
         self.__setAllPricesOfNPC()
     
