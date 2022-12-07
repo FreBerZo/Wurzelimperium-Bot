@@ -6,10 +6,19 @@ Created on 21.03.2017
 @author: MrFlamez
 '''
 from src.WurzelBot import WurzelBot
+import atexit
 import logging
+
 
 def initWurzelBot():
     logging.basicConfig(filename='wurzelbot.log', level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    return WurzelBot()
+    wurzel_bot = WurzelBot()
+
+    def exit_handler():
+        print("WurzelBot wird heruntergefahren...")
+        wurzel_bot.exitBot()
+
+    atexit.register(exit_handler)
+    return wurzel_bot
 
 #TODO: Konstruktor prüfen, evtl um Accountdaten erweitern

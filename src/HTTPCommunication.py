@@ -446,6 +446,26 @@ class HTTPConnection(object):
         else:
             return self.__getUserDataFromJSONContent(jContent)
 
+    def get_garden_data(self, garden_id):
+        """
+        Gibt alle Daten zu einem Garten roh zurück.
+        """
+        headers = {'Cookie': 'PHPSESSID=' + self.__Session.getSessionID() + '; ' + \
+                             'wunr=' + self.__userID,
+                   'Connection': 'Keep-Alive'}
+        adresse = 'http://s' + str(self.__Session.getServer()) + \
+                  '.wurzelimperium.de/ajax/ajax.php?do=changeGarden&garden=' + \
+                  str(garden_id) + '&token=' + str(self.__token)
+
+        try:
+            response, content = self.__webclient.request(adresse, 'GET', headers = headers)
+            self.__checkIfHTTPStateIsOK(response)
+            jContent = self.__generateJSONContentAndCheckForOK(content)
+        except:
+            raise
+        else:
+            return jContent
+
 
     def getPlantsToWaterInGarden(self, gardenID):
         """
@@ -1038,3 +1058,6 @@ class YAMLError(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
+
+http_connection = HTTPConnection()

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from src.HTTPCommunication import http_connection
+
 '''
 Created on 15.05.2019
 
@@ -9,8 +11,7 @@ Created on 15.05.2019
 
 class Marketplace():
     
-    def __init__(self, httpConnection):
-        self.__httpConn = httpConnection
+    def __init__(self):
         self.__tradeableProductIDs = None
         
     def getAllTradableProducts(self):
@@ -21,7 +22,7 @@ class Marketplace():
         return self.__tradeableProductIDs
     
     def updateAllTradableProducts(self):
-        self.__tradeableProductIDs = self.__httpConn.getAllTradeableProductsFromOverview()
+        self.__tradeableProductIDs = http_connection.getAllTradeableProductsFromOverview()
     
     def getCheapestOffer(self, id):
         """
@@ -50,7 +51,7 @@ class Marketplace():
            and \
            id in self.__tradeableProductIDs:
 
-            listOffers = self.__httpConn.getOffersFromProduct(id)
+            listOffers = http_connection.getOffersFromProduct(id)
         
         else: #Product is not tradeable
             listOffers = None
@@ -88,5 +89,5 @@ class Marketplace():
             return gaps
 
 
-
+marketplace = Marketplace()
         

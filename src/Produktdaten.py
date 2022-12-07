@@ -8,6 +8,7 @@ Created on 23.05.2019
  
 import json
 from src.Produkt import Product
+from src.HTTPCommunication import http_connection
 
 CATEGORY_DECORATION       = 'd'
 CATEGORY_HERBS            = 'h'
@@ -21,8 +22,7 @@ CATEGORY_OTHER            = 'u'
 
 class ProductData():
     
-    def __init__(self, httpConnection):
-        self.__httpConn = httpConnection
+    def __init__(self):
         self.__products = []
     
     def __setAllPricesOfNPC(self):
@@ -30,7 +30,7 @@ class ProductData():
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
         """
         
-        dNPC = self.__httpConn.getNPCPrices()
+        dNPC = http_connection.getNPCPrices()
         dNPCKeys = dNPC.keys()
         
         for product in self.__products:
@@ -45,6 +45,11 @@ class ProductData():
     def getProductByID(self, id):
         for product in self.__products:
             if int(id) == int(product.getID()): return product
+
+    def get_product_by_crop_id(self, crop_id):
+        for product in self.__products:
+            if int(crop_id) == int(product.get_crop_id()):
+                return product
             
     def getProductByName(self, name : str):
         for product in self.__products:
@@ -65,7 +70,7 @@ class ProductData():
         """
         Initialisiert alle Produkte.
         """
-        products = self.__httpConn.getAllProductInformations()
+        products = http_connection.getAllProductInformations()
         jProducts = json.loads(products)
         dictProducts = dict(jProducts)
         keys = dictProducts.keys()
@@ -83,7 +88,7 @@ class ProductData():
                                            sy=dictProducts[key]['sy'],
                                            name=name.encode('utf-8'),
                                            lvl=dictProducts[key]['level'],
-                                           crop=dictProducts[key]['crop'],
+                                           crop_id=dictProducts[key]['crop'],
                                            plantable=dictProducts[key]['plantable'],
                                            time=dictProducts[key]['time']))
                 
@@ -101,3 +106,6 @@ class ProductData():
                 continue
 
             product.printAll()
+
+
+product_data = ProductData()
