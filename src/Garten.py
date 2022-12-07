@@ -374,7 +374,9 @@ class GardenManager:
         earliest = None
         for garden in self.gardens:
             for crop in garden.get_all_crops_from_class(PlantCrop):
-                if earliest is None or earliest > crop.harvest_time:
+                # to group up all plants who can be harvested in a close timeframe the latest is taken
+                if earliest is None or earliest - 60 > crop.harvest_time \
+                        or (crop.harvest_time > earliest > crop.harvest_time - 60):
                     earliest = crop.harvest_time
         return earliest
 
