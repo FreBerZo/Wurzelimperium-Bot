@@ -12,6 +12,7 @@ from src.Messenger import messenger
 from src.Garten import garden_manager
 from src.Lager import storage
 from src.Produktdaten import product_data
+import datetime
 import time
 import logging
 
@@ -114,6 +115,12 @@ class WurzelBot(object):
         else:
             self.__logBot.info('Logout erfolgreich.')
 
+    def sec_until_next_action(self):
+        earliest_action = garden_manager.get_earliest_required_action()
+        self.updateUserData()
+        now_time = spieler.get_time()
+        return earliest_action - now_time
+
     def auto_plant(self):
         while True:
             self.harvestAllGarden()
@@ -125,9 +132,11 @@ class WurzelBot(object):
                     self.growPlantsInGardens(plant)
                 print("Es wird gegossen...")
                 self.waterPlantsInAllGardens()
-            time.sleep(300)
-        # self.updateUserData()
-        # spieler.get_time()
+
+            sleep_time = self.sec_until_next_action()
+            if sleep_time > 0:
+                print("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
+                time.sleep(sleep_time)
 
     def updateUserData(self):
         """

@@ -103,7 +103,7 @@ class Field:
                 self.garden_field[y].append(Tile(x, y, i, garden_id))
                 i += 1
 
-    def __iter__(self):
+    def get_tiles_flat(self):
         return [tile for row in self.garden_field for tile in row]
 
     @staticmethod
@@ -195,8 +195,15 @@ class Garden:
         if not (fieldsToPlantSet.issubset(emptyFieldsSet)): return False
         return True
 
-    def get_earliest_finished_plant(self):
-        pass
+    def get_all_crops(self):
+        crops = []
+        for tile in self.garden_field.get_tiles_flat():
+            if tile.crop not in crops:
+                crops.append(tile.crop)
+        return crops
+
+    def get_all_crops_from_class(self, crop_class):
+        return [crop for crop in self.get_all_crops() if isinstance(crop, crop_class)]
 
     def update_garden(self):
         garden_data = http_connection.get_garden_data(self.garden_id)
@@ -345,6 +352,14 @@ class GardenManager:
             if garden.garden_id == garden_id:
                 return garden
         return None
+
+    def get_earliest_required_action(self):
+        earliest = None
+        for garden in self.gardens:
+            for crop in garden.get_all_crops_from_class(PlantCrop):
+                if earliest is None or earliest > crop.harvest_time:
+                    earliest = crop.harvest_time
+        return earliest
 
 
 garden_manager = GardenManager()
