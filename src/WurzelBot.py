@@ -12,6 +12,7 @@ from src.Messenger import messenger
 from src.Garten import garden_manager
 from src.Lager import storage
 from src.Produktdaten import product_data
+from src.Gardener import gardener
 import datetime
 import time
 import logging
@@ -127,9 +128,15 @@ class WurzelBot(object):
             if self.hasEmptyFields():
                 self.printStock()
                 while self.hasEmptyFields():
-                    plant = self.getLowestPlantStockEntry()
-                    print(plant + " wird angepflanzt...")
-                    self.growPlantsInGardens(plant)
+                    stock = storage.getOrderedStockList()
+                    plant_name = None
+                    for product_id in stock:
+                        product = product_data.getProductByID(product_id)
+                        if gardener.can_be_planted_now(product):
+                            plant_name = product.getName()
+                            break
+                    print(plant_name + " wird angepflanzt...")
+                    self.growPlantsInGardens(plant_name)
                 print("Es wird gegossen...")
                 self.waterPlantsInAllGardens()
 

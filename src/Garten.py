@@ -52,6 +52,9 @@ class Tile:
             del self.crop
         self.crop = crop
 
+    def is_empty(self):
+        return self.crop is None
+
     def update(self, tile_data):
         width, height = str(tile_data[9]).split('x')[:2]
         size = (int(width), int(height))
@@ -210,6 +213,16 @@ class Garden:
         for tile_id, tile_data in garden_data['garden'].items():
             self.garden_field.update_tile(tile_id, tile_data)
 
+    def plant_fits_at(self, size, pos_x, pos_y):
+        for x in range(size[0]):
+            for y in range(size[1]):
+                cur_x = pos_x + x
+                cur_y = pos_y + y
+                if not self.garden_field.tile_is_valid(cur_x, cur_y) \
+                   or not self.garden_field.get_tile(cur_x, cur_y).is_empty():
+                    return False
+        return True
+
     def waterPlants(self):
         """
         Ein Garten mit der gardenID wird komplett bewässert.
@@ -226,6 +239,8 @@ class Garden:
         else:
             self._logGarden.info('Im Garten ' + str(self.garden_id) + ' wurden ' + str(nPlants) + ' Pflanzen gegossen.')
             print('Im Garten ' + str(self.garden_id) + ' wurden ' + str(nPlants) + ' Pflanzen gegossen.')
+
+        self.update_garden()
 
     def getEmptyFields(self):
         """
@@ -259,6 +274,8 @@ class Garden:
             raise
         else:
             pass
+
+        self.update_garden()
 
     def growPlant(self, plantID, sx, sy, amount):
         """
@@ -360,6 +377,10 @@ class GardenManager:
                 if earliest is None or earliest > crop.harvest_time:
                     earliest = crop.harvest_time
         return earliest
+
+    def update_all(self):
+        for garden in self.gardens:
+            garden.update_garden()
 
 
 garden_manager = GardenManager()
