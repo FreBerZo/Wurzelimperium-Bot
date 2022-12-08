@@ -1,6 +1,6 @@
-from src.Garten import garden_manager
-from src.Garten import GARDEN_WIDTH
-from src.Garten import GARDEN_HEIGHT
+from wurzelbot.Garten import garden_manager
+from wurzelbot.Garten import GARDEN_WIDTH
+from wurzelbot.Garten import GARDEN_HEIGHT
 
 
 class Gardener:

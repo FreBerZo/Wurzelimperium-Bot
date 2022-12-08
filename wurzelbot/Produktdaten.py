@@ -7,8 +7,8 @@ Created on 23.05.2019
 '''
  
 import json
-from src.Produkt import Product
-from src.HTTPCommunication import http_connection
+from wurzelbot.Produkt import Product
+from wurzelbot.HTTPCommunication import http_connection
 
 CATEGORY_DECORATION       = 'd'
 CATEGORY_HERBS            = 'h'

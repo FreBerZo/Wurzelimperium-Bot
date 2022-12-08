@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from src.HTTPCommunication import http_connection
-from src.Produktdaten import product_data
-from src.Spieler import spieler
+from wurzelbot.HTTPCommunication import http_connection
+from wurzelbot.Produktdaten import product_data
+from wurzelbot.Spieler import spieler
 import logging
 
 GARDEN_WIDTH = 17

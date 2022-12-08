@@ -5,7 +5,8 @@ Created on 21.03.2017
 
 @author: MrFlamez
 '''
-from src.WurzelBot import WurzelBot
+from wurzelbot.WurzelBot import WurzelBot
+import os
 import atexit
 import logging
 

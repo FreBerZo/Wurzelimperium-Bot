@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import src.Main as main
+import wurzelbot.main as main
 
 
 """

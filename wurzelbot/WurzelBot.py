@@ -6,14 +6,14 @@ Created on 21.03.2017
 @author: MrFlamez
 '''
 
-from src.Spieler import spieler, Login
-from src.HTTPCommunication import http_connection
-from src.Messenger import messenger
-from src.Garten import garden_manager
-from src.Lager import storage
-from src.Produktdaten import product_data
-from src.Gardener import gardener
-from src.Clock import clock
+from wurzelbot.Spieler import spieler, Login
+from wurzelbot.HTTPCommunication import http_connection
+from wurzelbot.Messenger import messenger
+from wurzelbot.Garten import garden_manager
+from wurzelbot.Lager import storage
+from wurzelbot.Produktdaten import product_data
+from wurzelbot.Gardener import gardener
+from wurzelbot.Clock import clock
 import datetime
 import time
 import logging

@@ -5,7 +5,7 @@ Created on 21.03.2017
 @author: MrFlamez
 '''
 
-from src.HTTPCommunication import http_connection
+from wurzelbot.HTTPCommunication import http_connection
 from collections import namedtuple
 
 

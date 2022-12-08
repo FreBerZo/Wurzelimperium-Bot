@@ -9,7 +9,7 @@ Created on 21.03.2017
 from urllib.parse import urlencode
 import json, re, httplib2
 from http.cookies import SimpleCookie
-from src.Session import Session
+from wurzelbot.Session import Session
 import yaml, time, logging, math, io
 import xml.etree.ElementTree as eTree
 from lxml import html

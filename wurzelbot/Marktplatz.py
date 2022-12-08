@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from src.HTTPCommunication import http_connection
+from wurzelbot.HTTPCommunication import http_connection
 
 '''
 Created on 15.05.2019
