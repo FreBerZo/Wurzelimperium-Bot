@@ -22,4 +22,23 @@ def initWurzelBot():
     atexit.register(exit_handler)
     return wurzel_bot
 
-#TODO: Konstruktor prüfen, evtl um Accountdaten erweitern
+
+def main():
+    user = os.environ.get('WURZELBOT_USER')
+    pw = os.environ.get('WURZELBOT_PW')
+    server = os.environ.get('WURZELBOT_SERVER')
+
+    if user is None or pw is None or server is None:
+        print("Environment variables WURZELBOT_USER, WURZELBOT_PW or WURZELBOT_SERVER are missing.")
+        return
+
+    # Login und Initialisierung des Bots
+    wurzel_bot = initWurzelBot()
+    wurzel_bot.launchBot(int(server), user, pw)
+
+    # automatisches pflanzen starten
+    wurzel_bot.auto_plant()
+
+
+if __name__ == "__main__":
+    main()
