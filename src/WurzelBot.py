@@ -13,6 +13,7 @@ from src.Garten import garden_manager
 from src.Lager import storage
 from src.Produktdaten import product_data
 from src.Gardener import gardener
+from src.Clock import clock
 import datetime
 import time
 import logging
@@ -77,6 +78,8 @@ class WurzelBot(object):
             spieler.setUserDataFromServer()
         except:
             self.__logBot.error('UserDaten konnten nicht aktualisiert werden')
+
+        clock.init_time(spieler.get_time())
         
         try:
             tmpHoneyFarmAvailability = http_connection.isHoneyFarmAvailable(spieler.getLevelNr())
@@ -118,9 +121,7 @@ class WurzelBot(object):
 
     def sec_until_next_action(self):
         earliest_action = garden_manager.get_earliest_required_action()
-        self.updateUserData()
-        now_time = spieler.get_time()
-        return earliest_action - now_time
+        return earliest_action - clock.get_current_game_time()
 
     def auto_plant(self):
         while True:
@@ -145,6 +146,7 @@ class WurzelBot(object):
                 print("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
                 time.sleep(sleep_time)
 
+    # TODO: check if this actually does something or is broken
     def updateUserData(self):
         """
         Ermittelt die Userdaten und setzt sie in der Spielerklasse.
