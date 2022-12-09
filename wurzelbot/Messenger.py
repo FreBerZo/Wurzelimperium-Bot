@@ -194,6 +194,7 @@ class Messenger():
 
         return summary
 
+    # TODO: fix this function
     def writeMessage(self, sender, recipients, subject, body):
         """
         Verschickt eine Nachricht und fügt diese der Liste der gesendeten Nachrichten hinzu.

@@ -30,8 +30,6 @@ class HTTPConnection(object):
         self.__webclient = httplib2.Http(disable_ssl_certificate_validation=True)
         self.__webclient.follow_redirects = False
         self.__userAgent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36 Vivaldi/2.2.1388.37'
-        self.__logHTTPConn = logging.getLogger('bot.HTTPConn')
-        self.__logHTTPConn.setLevel(logging.DEBUG)
         self.__Session = Session()
         self.__token = None
         self.__userID = None
@@ -733,6 +731,7 @@ class HTTPConnection(object):
 
         return userList
 
+    # TODO: this function is never used, maybe remove
     def readStorageFromServer(self):
 
         headers = {'User-Agent': self.__userAgent,\
@@ -811,13 +810,10 @@ class HTTPConnection(object):
             #print(content.decode('UTF-8'))
 
             if jContent['status'] == 'error':
-                print(jContent['message'])
-                self.__logHTTPConn.info(jContent['message'])
+                logging.info(jContent['message'])
             elif jContent['status'] == 'ok':
                 msg = jContent['harvestMsg'].replace('<div>', '').replace('</div>', '\n').replace('&nbsp;', ' ')
-                msg = msg.strip()
-                print(msg)
-                self.__logHTTPConn.info(msg)
+                logging.info(msg.strip())
         except:
             raise
         else:
@@ -860,7 +856,6 @@ class HTTPConnection(object):
         try:
             response, content = self.__webclient.request(adresse, 'GET', headers = headers)
         except:
-            print('except')
             raise
         else:
             pass
@@ -881,10 +876,7 @@ class HTTPConnection(object):
     
         try:
             response, content = self.__webclient.request(adresse, 'GET', headers = headers)
-            print(response)
-            print(content)
         except:
-            print('except')
             raise
         else:
             pass    

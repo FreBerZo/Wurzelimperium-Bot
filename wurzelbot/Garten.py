@@ -139,8 +139,6 @@ class Garden:
     
     def __init__(self, garden_id):
         self.garden_id = garden_id
-        self._logGarden = logging.getLogger('bot.Garden_' + str(garden_id))
-        self._logGarden.setLevel(logging.DEBUG)
         self.garden_field = Field(garden_id)
 
     def _getAllFieldIDsFromFieldIDAndSizeAsString(self, fieldID, sx, sy):
@@ -163,7 +161,7 @@ class Garden:
         if (sx == 2 and sy == 1): return str(fieldID) + ',' + str(fieldID + 1)
         if (sx == 1 and sy == 2): return str(fieldID) + ',' + str(fieldID + 17)
         if (sx == 2 and sy == 2): return str(fieldID) + ',' + str(fieldID + 1) + ',' + str(fieldID + 17) + ',' + str(fieldID + 18)
-        self._logGarden.debug('Error der plantSize --> sx: ' + str(sx) + ' sy: ' + str(sy))
+        logging.debug('Error der plantSize --> sx: ' + str(sx) + ' sy: ' + str(sy))
 
     def _getAllFieldIDsFromFieldIDAndSizeAsIntList(self, fieldID, sx, sy):
         """
@@ -227,7 +225,7 @@ class Garden:
         """
         Ein Garten mit der gardenID wird komplett bewässert.
         """
-        self._logGarden.info('Gieße alle Pflanzen im Garten ' + str(self.garden_id) + '.')
+        logging.info('Gieße alle Pflanzen im Garten ' + str(self.garden_id) + '.')
         try:
             plants = http_connection.getPlantsToWaterInGarden(self.garden_id)
             nPlants = len(plants['fieldID'])
@@ -235,10 +233,9 @@ class Garden:
                 sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i], plants['sy'][i])
                 http_connection.waterPlantInGarden(self.garden_id, plants['fieldID'][i], sFields)
         except:
-            self._logGarden.error('Garten ' + str(self.garden_id) + ' konnte nicht bewässert werden.')
+            logging.error('Garten ' + str(self.garden_id) + ' konnte nicht bewässert werden.')
         else:
-            self._logGarden.info('Im Garten ' + str(self.garden_id) + ' wurden ' + str(nPlants) + ' Pflanzen gegossen.')
-            print('Im Garten ' + str(self.garden_id) + ' wurden ' + str(nPlants) + ' Pflanzen gegossen.')
+            logging.info('Im Garten ' + str(self.garden_id) + ' wurden ' + str(nPlants) + ' Pflanzen gegossen.')
 
         self.update_garden()
 
@@ -249,7 +246,7 @@ class Garden:
         try:
             tmpEmptyFields = http_connection.getEmptyFieldsOfGarden(self.garden_id)
         except:
-            self._logGarden.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
+            logging.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
         else:
             return tmpEmptyFields
 
@@ -260,7 +257,7 @@ class Garden:
         try:
             tmpWeedFields = http_connection.getWeedFieldsOfGarden(self.garden_id)
         except:
-            self._logGarden.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
+            logging.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
         else:
             return tmpWeedFields
 
@@ -303,12 +300,10 @@ class Garden:
                     emptyFields = list(tmpSet)
 
         except:
-            self._logGarden.error('Im Garten ' + str(self.garden_id) + ' konnte nicht gepflanzt werden.')
+            logging.error('Im Garten ' + str(self.garden_id) + ' konnte nicht gepflanzt werden.')
             return 0
         else:
-            msg = 'Im Garten ' + str(self.garden_id) + ' wurden ' + str(planted) + ' Pflanzen gepflanzt.'
-            self._logGarden.info(msg)
-            print(msg)
+            logging.info('Im Garten ' + str(self.garden_id) + ' wurden ' + str(planted) + ' Pflanzen gepflanzt.')
             return planted
 
 
@@ -329,9 +324,9 @@ class AquaGarden(Garden):
                 sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i], plants['sy'][i])
                 http_connection.waterPlantInAquaGarden(plants['fieldID'][i], sFields)
         except:
-            self._logGarden.error('Wassergarten konnte nicht bewässert werden.')
+            logging.error('Wassergarten konnte nicht bewässert werden.')
         else:
-            self._logGarden.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
+            logging.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
         
     def harvest(self):
         """

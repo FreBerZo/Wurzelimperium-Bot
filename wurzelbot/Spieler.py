@@ -4,6 +4,7 @@
 Created on 21.03.2017
 @author: MrFlamez
 '''
+import logging
 
 from wurzelbot.HTTPCommunication import http_connection
 from collections import namedtuple
@@ -83,7 +84,8 @@ class Spieler():
         try:
             tmpUserData = http_connection.readUserDataFromServer()
         except:
-            print('Status der E-Mail Adresse konnte nicht ermittelt werden.')
+
+            logging.warning('Status der E-Mail Adresse konnte nicht ermittelt werden.')
         else:
             self.__userData = tmpUserData
 

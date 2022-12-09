@@ -24,13 +24,6 @@ class WurzelBot(object):
     Die Klasse WurzelBot übernimmt jegliche Koordination aller anstehenden Aufgaben.
     """
 
-    def __init__(self):
-        """
-        
-        """
-        self.__logBot = logging.getLogger("bot")
-        self.__logBot.setLevel(logging.DEBUG)
-
     def __getAllFieldIDsFromFieldIDAndSizeAsString(self, fieldID, sx, sy):
         """
         Rechnet anhand der fieldID und Größe der Pflanze (sx, sy) alle IDs aus und gibt diese als String zurück.
@@ -39,7 +32,7 @@ class WurzelBot(object):
         if (sx == '2' and sy == '1'): return str(fieldID) + ',' + str(fieldID + 1)
         if (sx == '1' and sy == '2'): return str(fieldID) + ',' + str(fieldID + 17)
         if (sx == '2' and sy == '2'): return str(fieldID) + ',' + str(fieldID + 1) + ',' + str(fieldID + 17) + ',' + str(fieldID + 18)
-        self.__logBot.debug('Error der plantSize --> sx: ' + sx + ' sy: ' + sy)
+        logging.debug('Error der plantSize --> sx: ' + sx + ' sy: ' + sy)
 
     def __getAllFieldIDsFromFieldIDAndSizeAsIntList(self, fieldID, sx, sy):
         """
@@ -58,40 +51,40 @@ class WurzelBot(object):
         Diese Methode startet und initialisiert den Wurzelbot. Dazu wird ein Login mit den
         übergebenen Logindaten durchgeführt und alles nötige initialisiert.
         """
-        self.__logBot.info('-------------------------------------------')
-        self.__logBot.info('Starte Wurzelbot')
+        logging.info('-------------------------------------------')
+        logging.info('Starte Wurzelbot')
         loginDaten = Login(server=server, user=user, password=pw)
 
         try:
             http_connection.logIn(loginDaten)
         except:
-            self.__logBot.error('Problem beim Starten des Wurzelbots.')
+            logging.error('Problem beim Starten des Wurzelbots.')
             return
 
         try:
             spieler.setUserNameFromServer()
         except:
-            self.__logBot.error('Username konnte nicht ermittelt werden.')
+            logging.error('Username konnte nicht ermittelt werden.')
 
 
         try:
             spieler.setUserDataFromServer()
         except:
-            self.__logBot.error('UserDaten konnten nicht aktualisiert werden')
+            logging.error('UserDaten konnten nicht aktualisiert werden')
 
         clock.init_time(spieler.get_time())
         
         try:
             tmpHoneyFarmAvailability = http_connection.isHoneyFarmAvailable(spieler.getLevelNr())
         except:
-            self.__logBot.error('Verfügbarkeit der Imkerei konnte nicht ermittelt werden.')
+            logging.error('Verfügbarkeit der Imkerei konnte nicht ermittelt werden.')
         else:
             spieler.setHoneyFarmAvailability(tmpHoneyFarmAvailability)
 
         try:
             tmpAquaGardenAvailability = http_connection.isAquaGardenAvailable(spieler.getLevelNr())
         except:
-            self.__logBot.error('Verfügbarkeit des Wassergartens konnte nicht ermittelt werden.')
+            logging.error('Verfügbarkeit des Wassergartens konnte nicht ermittelt werden.')
         else:
             spieler.setAquaGardenAvailability(tmpAquaGardenAvailability)
 
@@ -100,7 +93,7 @@ class WurzelBot(object):
         try:
             garden_manager.init_gardens()
         except:
-            self.__logBot.error('Anzahl der Gärten konnte nicht ermittelt werden.')
+            logging.error('Anzahl der Gärten konnte nicht ermittelt werden.')
  
         spieler.accountLogin = loginDaten
         spieler.setUserID(http_connection.getUserID())
@@ -111,13 +104,13 @@ class WurzelBot(object):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
-        self.__logBot.info('Beende Wurzelbot')
+        logging.info('Beende Wurzelbot')
         try:
             http_connection.logOut()
         except:
-            self.__logBot.error('Wurzelbot konnte nicht korrekt beendet werden.')
+            logging.error('Wurzelbot konnte nicht korrekt beendet werden.')
         else:
-            self.__logBot.info('Logout erfolgreich.')
+            logging.info('Logout erfolgreich.')
 
     def sec_until_next_action(self):
         earliest_action = garden_manager.get_earliest_required_action()
@@ -133,17 +126,17 @@ class WurzelBot(object):
                     plant_name = None
                     for product_id in stock:
                         product = product_data.getProductByID(product_id)
-                        if gardener.can_be_planted_now(product):
+                        if gardener.can_be_planted_now(product) and product.getName() != "Weihnachtskaktus":
                             plant_name = product.getName()
                             break
-                    print(plant_name + " wird angepflanzt...")
+                    logging.info(plant_name + " wird angepflanzt")
                     self.growPlantsInGardens(plant_name)
-                print("Es wird gegossen...")
+                logging.info("Pflanzen werden gegossen")
                 self.waterPlantsInAllGardens()
 
             sleep_time = self.sec_until_next_action()
             if sleep_time > 0:
-                print("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
+                logging.info("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
                 time.sleep(sleep_time)
 
     # TODO: check if this actually does something or is broken
@@ -154,7 +147,7 @@ class WurzelBot(object):
         try:
             userData = http_connection.readUserDataFromServer()
         except:
-            self.__logBot.error('UserDaten konnten nicht aktualisiert werden')
+            logging.error('UserDaten konnten nicht aktualisiert werden')
         else:
             spieler.userData = userData
 
@@ -179,7 +172,7 @@ class WurzelBot(object):
             try:
                 messenger.writeMessage(spieler.getUserName(), recipients, subject, body)
             except:
-                self.__logBot.error('Konnte keine Nachricht verschicken.')
+                logging.error('Konnte keine Nachricht verschicken.')
             else:
                 pass
 
@@ -193,7 +186,7 @@ class WurzelBot(object):
             for garden in garden_manager.gardens:
                 emptyFields.append(garden.getEmptyFields())
         except:
-            self.__logBot.error('Konnte leere Felder von Garten ' + str(garden.getID()) + ' nicht ermitteln.')
+            logging.error('Konnte leere Felder von Garten ' + str(garden.getID()) + ' nicht ermitteln.')
         else:
             pass
         return emptyFields
@@ -215,7 +208,7 @@ class WurzelBot(object):
             for garden in garden_manager.gardens:
                 weedFields.append(garden.getWeedFields())
         except:
-            self.__logBot.error('Konnte Unkraut-Felder von Garten ' + str(garden.getID()) + ' nicht ermitteln.')
+            logging.error('Konnte Unkraut-Felder von Garten ' + str(garden.getID()) + ' nicht ermitteln.')
         else:
             pass
 
@@ -232,9 +225,9 @@ class WurzelBot(object):
 
             storage.updateNumberInStock()
         except:
-            self.__logBot.error('Konnte nicht alle Gärten ernten.')
+            logging.error('Konnte nicht alle Gärten ernten.')
         else:
-            self.__logBot.info('Konnte alle Gärten ernten.')
+            logging.info('Konnte alle Gärten ernten.')
             pass
 
     def growPlantsInGardens(self, productName, amount=-1):
@@ -246,15 +239,11 @@ class WurzelBot(object):
         product = product_data.getProductByName(productName)
 
         if product is None:
-            logMsg = 'Pflanze "' + productName + '" nicht gefunden'
-            self.__logBot.error(logMsg)
-            print(logMsg)
+            logging.error('Pflanze "' + productName + '" nicht gefunden')
             return -1
 
         if not product.isPlant() or not product.isPlantable():
-            logMsg = '"' + productName + '" kann nicht angepflanzt werden'
-            self.__logBot.error(logMsg)
-            print(logMsg)
+            logging.error('"' + productName + '" kann nicht angepflanzt werden')
             return -1
 
         for garden in garden_manager.gardens:
