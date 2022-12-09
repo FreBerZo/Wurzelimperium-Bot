@@ -4,6 +4,9 @@
 Created on 21.03.2017
 @author: MrFlamez
 '''
+import logging
+
+from wurzelbot.HTTPCommunication import http_connection
 from collections import namedtuple
 
 
@@ -60,25 +63,29 @@ class Spieler():
     def getCoins(self):
         return self.__userData['coins']
 
-    def setUserNameFromServer(self, http):
+    def get_time(self):
+        return self.__userData['time']
+
+    def setUserNameFromServer(self):
         """
         Liest den Spielernamen vom Server und speichert ihn in der Klasse.
         """
         try:
-            tmpUserName = http.getUserName()
+            tmpUserName = http_connection.getUserName()
         except:
             raise
         else:
             self.__userName = tmpUserName
     
-    def setUserDataFromServer(self, http):
+    def setUserDataFromServer(self):
         """
         Liest den Spielerdaten vom Server und speichert sie in der Klasse.
         """
         try:
-            tmpUserData = http.readUserDataFromServer()
+            tmpUserData = http_connection.readUserDataFromServer()
         except:
-            print('Status der E-Mail Adresse konnte nicht ermittelt werden.')
+
+            logging.warning('Status der E-Mail Adresse konnte nicht ermittelt werden.')
         else:
             self.__userData = tmpUserData
 
@@ -97,3 +104,4 @@ class Spieler():
             self.__eMailAdressConfirmed = tmpEMailConf
             
 
+spieler = Spieler()

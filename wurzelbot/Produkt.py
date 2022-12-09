@@ -9,20 +9,23 @@ Created on 23.01.2019
 
 class Product():
     
-    def __init__(self, id, cat, sx, sy, name, lvl, crop, plantable, time):
+    def __init__(self, id, cat, sx, sy, name, lvl, crop_id, plantable, time):
         self.__id = id
         self.__category = cat
         self.__sx = sx
         self.__sy = sy
         self.__name = name.decode('UTF-8')
         self.__level = lvl
-        self.__crop = crop
+        self.__crop_id = crop_id
         self.__isPlantable = plantable
         self.__timeUntilHarvest = time
         self.__priceNPC = None
    
     def getID(self):
         return self.__id
+
+    def get_crop_id(self):
+        return self.__crop_id
 
     def getCategory(self):
         return self.__category

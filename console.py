@@ -1,5 +1,5 @@
 from logging import log
-import src.Main as wbot
+import wurzelbot.main as wbot
 
 # Login data
 user = ''

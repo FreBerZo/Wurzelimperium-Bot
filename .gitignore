@@ -1,8 +1,5 @@
 # Python
 *.pyc
 
-# develepment testing file
-devtest.py
-
 # Log files
 *.log

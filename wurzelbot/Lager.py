@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from wurzelbot.HTTPCommunication import http_connection
 
 class Storage():
     
-    def __init__(self, httpConnection):
-        self.__httpConn = httpConnection
+    def __init__(self):
         self.__products = {}
 
 
@@ -27,7 +27,7 @@ class Storage():
         
         self.__resetNumbersInStock()
             
-        inventory = self.__httpConn.getInventory()
+        inventory = http_connection.getInventory()
         
         for i in inventory:
             self.__products[i] = inventory[i]
@@ -51,3 +51,6 @@ class Storage():
         for productID in self.getOrderedStockList().keys():
             return productID
         return -1
+
+
+storage = Storage()

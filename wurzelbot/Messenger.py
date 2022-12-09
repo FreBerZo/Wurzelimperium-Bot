@@ -5,6 +5,7 @@ Created on 24.10.2018
 @author: MrFlamez
 '''
 
+from wurzelbot.HTTPCommunication import http_connection
 from collections import namedtuple
 import re
 
@@ -27,9 +28,6 @@ class Messenger():
     __outbox = []
     __system = []
     __sent = []
-
-    def __init__(self, httpConnection):
-        self.__httpConn = httpConnection
 
     def __getMessageIDFromNewMessageResult(self, result):
         """
@@ -136,7 +134,7 @@ class Messenger():
         """
 
         try:
-            result = self.__httpConn.createNewMessageAndReturnResult()
+            result = http_connection.createNewMessageAndReturnResult()
             id = self.__getMessageIDFromNewMessageResult(result)
         except:
             raise
@@ -196,6 +194,7 @@ class Messenger():
 
         return summary
 
+    # TODO: fix this function
     def writeMessage(self, sender, recipients, subject, body):
         """
         Verschickt eine Nachricht und fügt diese der Liste der gesendeten Nachrichten hinzu.
@@ -210,7 +209,7 @@ class Messenger():
 
             try:
                 newMessageID = self.__getNewMessageID()
-                resultOfSentMessage = self.__httpConn.sendMessageAndReturnResult(newMessageID, recipient, subject, body)
+                resultOfSentMessage = http_connection.sendMessageAndReturnResult(newMessageID, recipient, subject, body)
                 messageDeliveryState = self.__getMessageDeliveryState(resultOfSentMessage)
                 tmp_Msg = Message(sender, recipient, subject, body, messageDeliveryState)
                 self.__sent.append(tmp_Msg)
@@ -228,3 +227,6 @@ class MessengerError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+messenger = Messenger()
