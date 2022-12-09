@@ -11,4 +11,4 @@ COPY ./wurzelbot /code/wurzelbot
 
 ENV PYTHONPATH /code
 
-CMD ["python", "wurzelbot/main.py"]
+CMD ["python", "-u", "wurzelbot/main.py"]
