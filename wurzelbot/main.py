@@ -12,13 +12,16 @@ import atexit
 import logging
 
 
-def initWurzelBot():
-    # logging.basicConfig(filename='wurzelbot.log', level=logging.DEBUG, format='%(asctime)s - %(message)s')
+def initWurzelBot(user_name, password, server):
+    # logging.basicConfig( level=logging.DEBUG, format='%(asctime)s - %(message)s')
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
-    wurzel_bot = WurzelBot()
+    logging.info('-------------------------------------------')
+    logging.info('Starte Wurzelbot')
+    wurzel_bot = WurzelBot(user_name, password, server)
 
     def exit_handler():
         wurzel_bot.exitBot()
+        logging.info('Beende Wurzelbot')
 
     atexit.register(exit_handler)
     return wurzel_bot
@@ -34,8 +37,8 @@ def main():
         return
 
     # Login und Initialisierung des Bots
-    wurzel_bot = initWurzelBot()
-    wurzel_bot.launchBot(int(server), user, pw)
+    wurzel_bot = initWurzelBot(user, pw, int(server))
+    wurzel_bot.launchBot()
 
     # automatisches pflanzen starten
     wurzel_bot.auto_plant()

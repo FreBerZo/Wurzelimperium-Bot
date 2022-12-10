@@ -23,6 +23,10 @@ class WurzelBot(object):
     """
     Die Klasse WurzelBot übernimmt jegliche Koordination aller anstehenden Aufgaben.
     """
+    def __init__(self, user_name, password, server):
+        self.user_name = user_name
+        self.password = password
+        self.server = server
 
     def __getAllFieldIDsFromFieldIDAndSizeAsString(self, fieldID, sx, sy):
         """
@@ -46,20 +50,20 @@ class WurzelBot(object):
             
         return listFields
 
-    def launchBot(self, server, user, pw):
+    def launchBot(self):
         """
         Diese Methode startet und initialisiert den Wurzelbot. Dazu wird ein Login mit den
         übergebenen Logindaten durchgeführt und alles nötige initialisiert.
         """
-        logging.info('-------------------------------------------')
-        logging.info('Starte Wurzelbot')
-        loginDaten = Login(server=server, user=user, password=pw)
+        loginDaten = Login(server=self.server, user=self.user_name, password=self.password)
 
         try:
             http_connection.logIn(loginDaten)
         except:
             logging.error('Problem beim Starten des Wurzelbots.')
             return
+
+        logging.info('Login erfolgreich.')
 
         try:
             spieler.setUserNameFromServer()
@@ -104,7 +108,6 @@ class WurzelBot(object):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
-        logging.info('Beende Wurzelbot')
         try:
             http_connection.logOut()
         except:
@@ -136,8 +139,10 @@ class WurzelBot(object):
 
             sleep_time = self.sec_until_next_action()
             if sleep_time > 0:
+                self.exitBot()
                 logging.info("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
                 time.sleep(sleep_time)
+                self.launchBot()
 
     # TODO: check if this actually does something or is broken
     def updateUserData(self):

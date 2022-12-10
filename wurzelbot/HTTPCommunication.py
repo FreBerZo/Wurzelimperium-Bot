@@ -379,7 +379,8 @@ class HTTPConnection(object):
         except:
             raise
         else:
-            self.__del__()
+            pass
+            # self.__del__()
 
 
     def getNumberOfGardens(self):

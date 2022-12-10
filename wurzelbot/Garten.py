@@ -349,6 +349,7 @@ class GardenManager:
         """
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
+        self.gardens = []
         tmp_number_of_gardens = http_connection.getNumberOfGardens()
         spieler.numberOfGardens = tmp_number_of_gardens
         for i in range(1, tmp_number_of_gardens + 1):
