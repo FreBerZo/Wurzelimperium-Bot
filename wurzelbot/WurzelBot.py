@@ -67,23 +67,23 @@ class WurzelBot(object):
         logging.info('Login erfolgreich.')
 
         try:
-            spieler.setUserDataFromServer()
+            spieler.load_user_data()
         except:
             logging.error('UserDaten konnten nicht aktualisiert werden')
 
-        clock.init_time(spieler.get_time())
+        clock.init_time(spieler.time)
 
-        spieler.set_stats_from_server()
+        spieler.load_stats()
         
         try:
-            tmpHoneyFarmAvailability = http_connection.is_honey_farm_available(spieler.getLevelNr())
+            tmpHoneyFarmAvailability = http_connection.is_honey_farm_available(spieler.level)
         except:
             logging.error('Verfügbarkeit der Imkerei konnte nicht ermittelt werden.')
         else:
             spieler.setHoneyFarmAvailability(tmpHoneyFarmAvailability)
 
         try:
-            tmpAquaGardenAvailability = http_connection.is_aqua_garden_available(spieler.getLevelNr())
+            tmpAquaGardenAvailability = http_connection.is_aqua_garden_available(spieler.level)
         except:
             logging.error('Verfügbarkeit des Wassergartens konnte nicht ermittelt werden.')
         else:
@@ -97,7 +97,6 @@ class WurzelBot(object):
             logging.error('Anzahl der Gärten konnte nicht ermittelt werden.')
  
         spieler.accountLogin = loginDaten
-        spieler.setUserID(http_connection.get_user_id())
         storage.initProductList(product_data.getListOfAllProductIDs())
         storage.updateNumberInStock()
 
@@ -161,7 +160,7 @@ class WurzelBot(object):
         """
         if (spieler.isEMailAdressConfirmed()):
             try:
-                messenger.writeMessage(spieler.getUserName(), recipients, subject, body)
+                messenger.writeMessage(spieler.user_name, recipients, subject, body)
             except:
                 logging.error('Konnte keine Nachricht verschicken.')
             else:

@@ -224,10 +224,6 @@ class HTTPConnection(object):
             raise
 
     # general info
-    def get_user_id(self):
-        """Gibt die wunr als userID zurück die beim Login über das Cookie erhalten wurde."""
-        return self.__userID
-
     def __get_info_from_json_content(self, jContent, info):
         """Looks up certain info in the given JSON object and returns it."""
         mapping = {

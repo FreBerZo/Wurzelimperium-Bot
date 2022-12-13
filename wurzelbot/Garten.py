@@ -350,7 +350,7 @@ class GardenManager:
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
         self.gardens = []
-        tmp_number_of_gardens = spieler.get_number_of_gardens()
+        tmp_number_of_gardens = spieler.number_of_gardens
         for i in range(1, tmp_number_of_gardens + 1):
             garden = Garden(i)
             self.gardens.append(garden)

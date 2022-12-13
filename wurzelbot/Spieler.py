@@ -13,24 +13,36 @@ from collections import namedtuple
 
 Login = namedtuple('Login', 'server user password')
 
-class Spieler():
+
+class Spieler:
     """
     Diese Daten-Klasse enthält alle wichtigen Informationen über den Spieler.
     """
     
     accountLogin = None
-    __userName = None
-    __userID = None
-    numberOfGardens = None
-    # TODO: make attributes for every piece of required data instead of raw data
-    raw_user_data = None
-    raw_stats = None
+    user_name = None
+    user_id = None
+    money = None
+    points = None
+    coins = None
+    level = None
+    level_name = None
+    time = None
+    daily_login_bonus = None
+    number_of_gardens = None
+    guild = None
     __honeyFarmAvailability = None
     __aquaGardenAvailability = None
     __eMailAdressConfirmed = None
 
-    def __init__(self):
-        pass
+    # Quests completed
+    quests_completed = None
+    aqua_quests_completed = None
+    cactus_quests_completed = None
+    echino_quests_completed = None
+    bighead_quests_completed = None
+    opuntia_quests_completed = None
+    saguaro_quests_completed = None
 
     def setHoneyFarmAvailability(self, bAvl):
         self.__honeyFarmAvailability = bAvl
@@ -47,50 +59,40 @@ class Spieler():
     def isEMailAdressConfirmed(self):
         return self.__eMailAdressConfirmed
     
-    def getUserName(self):
-        return re.findall(r'<td>(.+?)</td>', self.raw_stats['table'][0])[1].replace(r'&nbsp;', '')
-    
-    def getLevelNr(self):
-        return int(self.raw_user_data['levelnr'])
-
-    def getLevelName(self):
-        return str(self.raw_user_data['level'])
-    
-    def getBar(self):
-        return str(self.raw_user_data['bar'])
-    
-    def getPoints(self):
-        return int(self.raw_user_data['points'])
-
-    def getCoins(self):
-        return int(self.raw_user_data['coins'])
-
-    def get_time(self):
-        return int(self.raw_user_data['time'])
-
-    def get_number_of_gardens(self):
-        return int(re.findall(r'<td>(.+?)</td>', self.raw_stats['table'][16])[1].replace(r'&nbsp;', ''))
-
-    def get_daily_login_bonus(self):
-        return self.raw_user_data['dailyloginbonus']
-    
-    def setUserDataFromServer(self):
+    def load_user_data(self):
         """
         Liest den Spielerdaten vom Server und speichert sie in der Klasse.
         """
-        try:
-            tmpUserData = http_connection.read_user_data_from_server()
-        except:
+        user_data = http_connection.read_user_data_from_server()
 
-            logging.warning('Status der E-Mail Adresse konnte nicht ermittelt werden.')
-        else:
-            self.raw_user_data = tmpUserData
+        self.user_name = user_data['uname']
+        self.money = float(user_data['bar_unformat'])
+        self.points = int(user_data['points'])
+        self.coins = int(user_data['coins'])
+        self.level = int(user_data['levelnr'])
+        self.level_name = user_data['level']
+        self.time = int(user_data['time'])
+        self.daily_login_bonus = user_data['dailyloginbonus']
 
-    def set_stats_from_server(self):
-        self.raw_stats = http_connection.get_stats()
+    def load_stats(self):
+        stats = http_connection.get_stats()['table']
+        mapping = {
+            'user_id': (1, int),
+            'quests_completed': (5, int),
+            'aqua_quests_completed': (6, int),
+            'cactus_quests_completed': (7, int),
+            'echino_quests_completed': (8, int),
+            'bighead_quests_completed': (9, int),
+            'opuntia_quests_completed': (10, int),
+            'saguaro_quests_completed': (11, int),
+            'number_of_gardens': (16, int),
+            'guild': (17, str),
+        }
 
-    def setUserID(self, userID):
-        self.__userID = userID
+        for key, value in mapping.items():
+            i, var_type = value
+            stat_value = var_type(re.findall(r'<td>(.*?)</td>', stats[i])[1].replace(r'&nbsp;', ''))
+            setattr(self, key, stat_value)
         
     def setConfirmedEMailAdressFromServer(self, http):
         """
