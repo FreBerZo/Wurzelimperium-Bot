@@ -14,6 +14,7 @@ from wurzelbot.Lager import storage
 from wurzelbot.Produktdaten import product_data
 from wurzelbot.Gardener import gardener
 from wurzelbot.Clock import clock
+from wurzelbot.collector import collector
 import datetime
 import time
 import logging
@@ -117,6 +118,7 @@ class WurzelBot(object):
 
     def auto_plant(self):
         while True:
+            collector.collect_daily_login_bonus()
             self.harvestAllGarden()
             if self.hasEmptyFields():
                 self.printStock()
