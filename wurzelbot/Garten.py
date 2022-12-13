@@ -227,11 +227,11 @@ class Garden:
         """
         logging.info('Gieße alle Pflanzen im Garten ' + str(self.garden_id) + '.')
         try:
-            plants = http_connection.getPlantsToWaterInGarden(self.garden_id)
+            plants = http_connection.get_plants_to_water_in_garden(self.garden_id)
             nPlants = len(plants['fieldID'])
             for i in range(0, nPlants):
                 sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i], plants['sy'][i])
-                http_connection.waterPlantInGarden(self.garden_id, plants['fieldID'][i], sFields)
+                http_connection.water_plant_in_garden(self.garden_id, plants['fieldID'][i], sFields)
         except:
             logging.error('Garten ' + str(self.garden_id) + ' konnte nicht bewässert werden.')
         else:
@@ -244,7 +244,7 @@ class Garden:
         Gibt alle leeren Felder des Gartens zurück.
         """
         try:
-            tmpEmptyFields = http_connection.getEmptyFieldsOfGarden(self.garden_id)
+            tmpEmptyFields = http_connection.get_empty_fields_of_garden(self.garden_id)
         except:
             logging.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
         else:
@@ -255,7 +255,7 @@ class Garden:
         Gibt alle Unkraut-Felder des Gartens zurück.
         """
         try:
-            tmpWeedFields = http_connection.getWeedFieldsOfGarden(self.garden_id)
+            tmpWeedFields = http_connection.get_weed_fields_of_garden(self.garden_id)
         except:
             logging.error('Konnte leere Felder von Garten ' + str(self.garden_id) + ' nicht ermitteln.')
         else:
@@ -266,7 +266,7 @@ class Garden:
         Erntet alles im Garten.
         """
         try:
-            http_connection.harvestGarden(self.garden_id)
+            http_connection.harvest_garden(self.garden_id)
         except:
             raise
         else:
@@ -290,7 +290,7 @@ class Garden:
             
                 if (self._isPlantGrowableOnField(field, emptyFields, fieldsToPlant, sx)):
                     fields = self._getAllFieldIDsFromFieldIDAndSizeAsString(field, sx, sy)
-                    http_connection.growPlant(field, plantID, self.garden_id, fields)
+                    http_connection.grow_plant(field, plantID, self.garden_id, fields)
                     planted += 1
 
                     #Nach dem Anbau belegte Felder aus der Liste der leeren Felder loeschen
@@ -318,11 +318,11 @@ class AquaGarden(Garden):
         Alle Pflanzen im Wassergarten werden bewässert.
         """
         try:
-            plants = http_connection.getPlantsToWaterInAquaGarden()
+            plants = http_connection.get_plants_to_water_in_aqua_garden()
             nPlants = len(plants['fieldID'])
             for i in range(0, nPlants):
                 sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i], plants['sy'][i])
-                http_connection.waterPlantInAquaGarden(plants['fieldID'][i], sFields)
+                http_connection.water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
         except:
             logging.error('Wassergarten konnte nicht bewässert werden.')
         else:
@@ -333,7 +333,7 @@ class AquaGarden(Garden):
         Erntet alles im Wassergarten.
         """
         try:
-            http_connection.harvestAquaGarden()
+            http_connection.harvest_aqua_garden()
         except:
             raise
         else:
@@ -350,14 +350,13 @@ class GardenManager:
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
         self.gardens = []
-        tmp_number_of_gardens = http_connection.getNumberOfGardens()
-        spieler.numberOfGardens = tmp_number_of_gardens
+        tmp_number_of_gardens = spieler.get_number_of_gardens()
         for i in range(1, tmp_number_of_gardens + 1):
             garden = Garden(i)
             self.gardens.append(garden)
             garden.update_garden()
 
-        if spieler.isAquaGardenAvailable() is True:
+        if spieler.is_aqua_garden_available() is True:
             self.aqua_garden = AquaGarden()
 
     def get_garden_by_id(self, garden_id):

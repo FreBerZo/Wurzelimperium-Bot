@@ -134,7 +134,7 @@ class Messenger():
         """
 
         try:
-            result = http_connection.createNewMessageAndReturnResult()
+            result = http_connection.create_new_message_and_return_result()
             id = self.__getMessageIDFromNewMessageResult(result)
         except:
             raise
@@ -209,7 +209,7 @@ class Messenger():
 
             try:
                 newMessageID = self.__getNewMessageID()
-                resultOfSentMessage = http_connection.sendMessageAndReturnResult(newMessageID, recipient, subject, body)
+                resultOfSentMessage = http_connection.send_message_and_return_result(newMessageID, recipient, subject, body)
                 messageDeliveryState = self.__getMessageDeliveryState(resultOfSentMessage)
                 tmp_Msg = Message(sender, recipient, subject, body, messageDeliveryState)
                 self.__sent.append(tmp_Msg)

@@ -30,7 +30,7 @@ class ProductData():
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
         """
         
-        dNPC = http_connection.getNPCPrices()
+        dNPC = http_connection.get_npc_prices()
         dNPCKeys = dNPC.keys()
         
         for product in self.__products:
@@ -70,7 +70,7 @@ class ProductData():
         """
         Initialisiert alle Produkte.
         """
-        products = http_connection.getAllProductInformations()
+        products = http_connection.get_all_product_informations()
         jProducts = json.loads(products)
         dictProducts = dict(jProducts)
         keys = dictProducts.keys()

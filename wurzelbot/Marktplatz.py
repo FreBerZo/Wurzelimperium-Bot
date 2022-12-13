@@ -22,7 +22,7 @@ class Marketplace():
         return self.__tradeableProductIDs
     
     def updateAllTradableProducts(self):
-        self.__tradeableProductIDs = http_connection.getAllTradeableProductsFromOverview()
+        self.__tradeableProductIDs = http_connection.get_all_tradeable_products_from_overview()
     
     def getCheapestOffer(self, id):
         """
@@ -51,7 +51,7 @@ class Marketplace():
            and \
            id in self.__tradeableProductIDs:
 
-            listOffers = http_connection.getOffersFromProduct(id)
+            listOffers = http_connection.get_offers_from_product(id)
         
         else: #Product is not tradeable
             listOffers = None

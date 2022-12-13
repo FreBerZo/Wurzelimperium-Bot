@@ -58,7 +58,7 @@ class WurzelBot(object):
         loginDaten = Login(server=self.server, user=self.user_name, password=self.password)
 
         try:
-            http_connection.logIn(loginDaten)
+            http_connection.log_in(loginDaten)
         except:
             logging.error('Problem beim Starten des Wurzelbots.')
             return
@@ -66,27 +66,23 @@ class WurzelBot(object):
         logging.info('Login erfolgreich.')
 
         try:
-            spieler.setUserNameFromServer()
-        except:
-            logging.error('Username konnte nicht ermittelt werden.')
-
-
-        try:
             spieler.setUserDataFromServer()
         except:
             logging.error('UserDaten konnten nicht aktualisiert werden')
 
         clock.init_time(spieler.get_time())
+
+        spieler.set_stats_from_server()
         
         try:
-            tmpHoneyFarmAvailability = http_connection.isHoneyFarmAvailable(spieler.getLevelNr())
+            tmpHoneyFarmAvailability = http_connection.is_honey_farm_available(spieler.getLevelNr())
         except:
             logging.error('Verfügbarkeit der Imkerei konnte nicht ermittelt werden.')
         else:
             spieler.setHoneyFarmAvailability(tmpHoneyFarmAvailability)
 
         try:
-            tmpAquaGardenAvailability = http_connection.isAquaGardenAvailable(spieler.getLevelNr())
+            tmpAquaGardenAvailability = http_connection.is_aqua_garden_available(spieler.getLevelNr())
         except:
             logging.error('Verfügbarkeit des Wassergartens konnte nicht ermittelt werden.')
         else:
@@ -100,7 +96,7 @@ class WurzelBot(object):
             logging.error('Anzahl der Gärten konnte nicht ermittelt werden.')
  
         spieler.accountLogin = loginDaten
-        spieler.setUserID(http_connection.getUserID())
+        spieler.setUserID(http_connection.get_user_id())
         storage.initProductList(product_data.getListOfAllProductIDs())
         storage.updateNumberInStock()
 
@@ -109,7 +105,7 @@ class WurzelBot(object):
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
         try:
-            http_connection.logOut()
+            http_connection.log_out()
         except:
             logging.error('Wurzelbot konnte nicht korrekt beendet werden.')
         else:
@@ -144,18 +140,6 @@ class WurzelBot(object):
                 time.sleep(sleep_time)
                 self.launchBot()
 
-    # TODO: check if this actually does something or is broken
-    def updateUserData(self):
-        """
-        Ermittelt die Userdaten und setzt sie in der Spielerklasse.
-        """
-        try:
-            userData = http_connection.readUserDataFromServer()
-        except:
-            logging.error('UserDaten konnten nicht aktualisiert werden')
-        else:
-            spieler.userData = userData
-
     def waterPlantsInAllGardens(self):
         """
         Alle Gärten des Spielers werden komplett bewässert.
@@ -163,7 +147,7 @@ class WurzelBot(object):
         for garden in garden_manager.gardens:
             garden.waterPlants()
         
-        if spieler.isAquaGardenAvailable():
+        if spieler.is_aqua_garden_available():
             pass
             #self.waterPlantsInAquaGarden()
 
@@ -225,7 +209,7 @@ class WurzelBot(object):
             for garden in garden_manager.gardens:
                 garden.harvest()
                 
-            if spieler.isAquaGardenAvailable():
+            if spieler.is_aqua_garden_available():
                 pass#self.waterPlantsInAquaGarden()
 
             storage.updateNumberInStock()
@@ -254,7 +238,7 @@ class WurzelBot(object):
         for garden in garden_manager.gardens:
             if amount == -1 or amount > storage.getStockByProductID(product.getID()):
                 amount = storage.getStockByProductID(product.getID())
-            planted += garden.growPlant(product.getID(), product.getSX(), product.getSY(), amount)
+            planted += garden.grow_plant(product.getID(), product.getSX(), product.getSY(), amount)
         
         storage.updateNumberInStock()
 

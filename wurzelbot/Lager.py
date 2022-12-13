@@ -27,7 +27,7 @@ class Storage():
         
         self.__resetNumbersInStock()
             
-        inventory = http_connection.getInventory()
+        inventory = http_connection.get_inventory()
         
         for i in inventory:
             self.__products[i] = inventory[i]
