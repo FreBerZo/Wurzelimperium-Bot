@@ -112,7 +112,7 @@ class WurzelBot(object):
                     if plant is None:
                         break
                     garden_manager.plant(plant)
-                garden_manager.water()
+            garden_manager.water()
 
             self.sleep_bot_until_next_action()
 
