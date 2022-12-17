@@ -42,11 +42,14 @@ class HTTPConnection(object):
     ############################
     # General helper functions #
     ############################
-    def __send_request(self, address: str, method: str = 'GET', body = None, headers: dict = {}):
-        uri = self.__get_url() + address
-        headers = {**self.__get_header(), **headers}
+    def __send_request(self, address, method='GET', body=None, headers=None):
+        url = self.__get_url() + address
+        if headers is None:
+            headers = self.__get_header()
+        else:
+            headers = {**self.__get_header(), **headers}
         try:
-            return self.__webclient.request(uri, method, body, headers)
+            return self.__webclient.request(url, method, body, headers)
         except:
             raise
 
@@ -376,45 +379,6 @@ class HTTPConnection(object):
 
         return plantsToBeWatered
 
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def __find_empty_fields_from_json_content(self, jContent):
-        """Sucht im JSON Content nach Felder die leer sind und gibt diese zurück."""
-        emptyFields = []
-        
-        for field in jContent['garden']:
-            if jContent['garden'][field][0] == 0:
-                emptyFields.append(int(field))
-
-        #Sortierung über ein leeres Array ändert Objekttyp zu None
-        if len(emptyFields) > 0:
-            emptyFields.sort(reverse=False)
-
-        return emptyFields
-
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def __find_weed_fields_from_json_content(self, jContent):
-        """Sucht im JSON Content nach Felder die mit Unkraut befallen sind und gibt diese zurück."""
-        weedFields = {}
-        
-        # 41 Unkraut, 42 Baumstumpf, 43 Stein, 45 Maulwurf
-        for field in jContent['garden']:
-            if jContent['garden'][field][0] in [41, 42, 43, 45]:
-                weedFields[int(field)] = float(jContent['garden'][field][6])
-
-        #Sortierung über ein leeres Array ändert Objekttyp zu None
-        if len(weedFields) > 0:
-            weedFields = {key: value for key, value in sorted(weedFields.items(), key=lambda item: item[1])}
-
-        return weedFields
-
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def __find_growing_plants_from_json_content(self, jContent):
-        """Returns list of growing plants from JSON content"""
-        growingPlants = []
-        for field in jContent['grow']:
-            growingPlants.append(field[1])
-        return growingPlants
-
     def _change_garden(self, gardenID):
         """Wechselt den Garten."""
         try:
@@ -425,20 +389,13 @@ class HTTPConnection(object):
         except:
             raise
 
-    # TODO: simplify this
     def get_garden_data(self, garden_id):
         """
         Gibt alle Daten zu einem Garten roh zurück.
         """
-        headers = {'Cookie': 'PHPSESSID=' + self.__Session.getSessionID() + '; ' + \
-                             'wunr=' + self.__userID,
-                   'Connection': 'Keep-Alive'}
-        adresse = 'http://s' + str(self.__Session.getServer()) + \
-                  '.wurzelimperium.de/ajax/ajax.php?do=changeGarden&garden=' + \
-                  str(garden_id) + '&token=' + str(self.__token)
-
         try:
-            response, content = self.__webclient.request(adresse, 'GET', headers=headers)
+            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(garden_id), str(self.__token))
+            response, content = self.__send_request(address)
             self.__check_http_ok(response)
             jContent = self.__generate_json_and_check_ok(content)
         except:
@@ -446,74 +403,17 @@ class HTTPConnection(object):
         else:
             return jContent
 
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def get_plants_to_water_in_garden(self, gardenID):
-        """
-        Ermittelt alle bepflanzten Felder im Garten mit der Nummer gardenID,
-        die auch gegossen werden können und gibt diese zurück.
-        """
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), str(self.__token))
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-        except:
-            raise
-        else:
-            return self.__find_plants_to_be_watered_from_json_content(jContent)
-
     def water_plant_in_garden(self, iGarten, iField, sFieldsToWater):
         """Bewässert die Pflanze iField mit der Größe sSize im Garten iGarten."""
         try:
-            address = 'save/wasser.php?feld[]={}&felder[]={}' \
-                      '&cid={}&garden={}'.format(str(iField), sFieldsToWater, self.__token, str(iGarten))
+            fields = ','.join([str(field) for field in sFieldsToWater])
+            address = 'save/wasser.php?feld[]={}&felder[]={}&cid={}&garden={}'\
+                      .format(str(iField), fields, self.__token, str(iGarten))
             response, content = self.__send_request(address)
             self.__check_http_ok(response)
             self.__generate_yaml_content_and_check_for_success(content.decode('UTF-8'))
         except:
             raise
-
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def get_empty_fields_of_garden(self, gardenID):
-        """Gibt alle leeren Felder eines Gartens zurück."""
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            emptyFields = self.__find_empty_fields_from_json_content(jContent)
-        except:
-            raise
-        else:
-            return emptyFields
-
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def get_weed_fields_of_garden(self, gardenID):
-        """Gibt alle Unkraut-Felder eines Gartens zurück."""
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            weedFields = self.__find_weed_fields_from_json_content(jContent)
-        except:
-            raise
-        else:
-            return weedFields
-
-    # TODO: check if required (should be deprecated because of new garden presentation)
-    def get_growing_plants_of_garden(self, gardenID):
-        """Returns all fields with growing plants of a garden."""
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            growingPlants = self.__find_growing_plants_from_json_content(jContent)
-        except:
-            raise
-        else:
-            return growingPlants
 
     def harvest_garden(self, gardenID):
         """Erntet alle fertigen Pflanzen im Garten."""
@@ -535,7 +435,7 @@ class HTTPConnection(object):
         """Baut eine Pflanze auf einem Feld an."""
         try:
             address = 'save/pflanz.php?pflanze[]={}&feld[]={}&felder[]={}&cid={}&garden={}'\
-                      .format(str(plant), str(field), fields, self.__token, str(gardenID))
+                      .format(str(plant), str(field), ','.join([str(field) for field in fields]), self.__token, str(gardenID))
             response, content = self.__send_request(address)
         except:
             raise

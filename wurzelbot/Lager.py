@@ -2,55 +2,76 @@
 # -*- coding: utf-8 -*-
 
 from wurzelbot.HTTPCommunication import http_connection
+from wurzelbot.Produktdaten import product_data
 
-class Storage():
+
+class Box:
+    def __init__(self, product, quantity):
+        self.product = product
+        self.quantity = quantity
+
+    def __lt__(self, other):
+        return self.quantity < other.quantity
+
+    def is_empty(self):
+        return self.quantity <= 0
+
+
+class Storage:
     
     def __init__(self):
-        self.__products = {}
+        self.__storage = []
 
-
-    def __resetNumbersInStock(self):
-        for productID in self.__products.keys():
-            self.__products[productID] = 0
-
-
-    def initProductList(self, productList):
-        
-        for productID in productList:
-            self.__products[str(productID)] = 0
-        
-    
-    def updateNumberInStock(self):
+    def update_storage(self):
         """
         Führt ein Update des Lagerbestands für alle Produkte durch.
         """
-        
-        self.__resetNumbersInStock()
-            
+        self.__storage = []
         inventory = http_connection.get_inventory()
         
         for i in inventory:
-            self.__products[i] = inventory[i]
+            self.__storage.append(Box(product_data.get_product_by_id(i), inventory[i]))
 
-    def getStockByProductID(self, productID):
-        return self.__products[str(productID)]
-    
-    def getKeys(self):
-        return self.__products.keys()
+    def is_empty(self):
+        for box in self.__storage:
+            if not box.is_empty():
+                return False
+        return True
 
-    def getOrderedStockList(self):
-        sortedStock = dict(sorted(self.__products.items(), key=lambda item: item[1]))
-        filteredStock = dict()
-        for productID in sortedStock:
-            if sortedStock[str(productID)] == 0: continue
-            filteredStock[str(productID)] = sortedStock[str(productID)]
-        
-        return filteredStock
+    def get_products(self):
+        return [box.product for box in self.__storage]
 
-    def getLowestStockEntry(self):
-        for productID in self.getOrderedStockList().keys():
-            return productID
-        return -1
+    def get_products_from_category(self, cat):
+        return [box.product for box in self.__storage if box.product.category == cat]
+
+    def get_ordered_products_from_category(self, cat):
+        return [box.product for box in sorted(self.__storage) if box.product.category == cat]
+
+    def get_box_for_product(self, product):
+        for box in self.__storage:
+            if box.product == product:
+                return box
+
+    def get_stock_from_product(self, product):
+        return self.get_box_for_product(product).quantity
+
+    def get_ordered_storage(self):
+        return [box for box in sorted(self.__storage, key=lambda box: box.quantity) if not box.is_empty()]
+
+    def get_lowest_box(self):
+        if self.is_empty():
+            return None
+        return self.get_ordered_storage()[0]
+
+    def print(self):
+        lines = []
+        for box in self.__storage:
+            lines.append('{}Amount: {}'.format(box.product.name.ljust(30), str(box.quantity).rjust(5)))
+
+        if len(lines) > 0:
+            print("\n".join(lines))
+        else:
+            print('Your stock is empty')
 
 
 storage = Storage()

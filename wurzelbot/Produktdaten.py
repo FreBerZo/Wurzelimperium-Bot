@@ -7,105 +7,126 @@ Created on 23.05.2019
 '''
  
 import json
-from wurzelbot.Produkt import Product
 from wurzelbot.HTTPCommunication import http_connection
+from enum import Enum
 
-CATEGORY_DECORATION       = 'd'
-CATEGORY_HERBS            = 'h'
-CATEGORY_HONEY            = 'honey'
-CATEGORY_WATER_PLANTS     = 'w'
-CATEGORY_VEGETABLES       = 'v' 
-CATEGORY_WATER_DECORATION = 'wd'
-CATEGORY_COINS            = ''
-CATEGORY_ADORNMENTS       = 'z'
-CATEGORY_OTHER            = 'u'
 
-class ProductData():
+class Category(Enum):
+    DECORATION = 'd'
+    HERBS = 'h'
+    HONEY = 'honey'
+    WATER_PLANTS = 'w'
+    VEGETABLES = 'v'
+    WATER_DECORATION = 'wd'
+    COINS = 'c'
+    ADORNMENTS = 'z'
+    SNAIL = 'snail'
+    OTHER = 'u'
+
+
+class Product:
+    def __init__(self, id, cat, sx, sy, name, lvl, crop_id, plantable, time):
+        self.id = id
+        if cat == '':
+            cat = 'c'
+        self.category = Category(cat)
+        self.size = (sx, sy)
+        self.name = name.decode('UTF-8')
+        self.level = lvl
+        self.crop_id = crop_id
+        self.is_plantable = plantable
+        self.time_until_harvest = time
+        self.price_npc = None
+
+    def is_plant(self):
+        return self.category == Category.VEGETABLES
+
+    def is_decoration(self):
+        return self.category == Category.DECORATION
+
+    def print_all(self):
+        # Show nothing instead of None
+        xstr = lambda s: s or ""
+
+        print('ID:', str(self.id).rjust(3), ' ',
+              'CAT:', str(self.category.name).ljust(5), ' ',
+              'Name:', str(self.name).ljust(35), ' ',
+              'Plantable:', str(self.is_plantable).ljust(5), ' ',
+              'NPC:', str(xstr(self.price_npc)).rjust(6), ' ',
+              'Size:', str(xstr(self.size)), ' ')
+
+
+class ProductData:
     
     def __init__(self):
         self.__products = []
     
-    def __setAllPricesOfNPC(self):
+    def set_all_prices(self):
         """
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
         """
-        
-        dNPC = http_connection.get_npc_prices()
-        dNPCKeys = dNPC.keys()
-        
+        npc_prices = http_connection.get_npc_prices()
         for product in self.__products:
-            productname = product.getName()
-            if productname in dNPCKeys:
-                product.setPriceNPC(dNPC[productname])
+            if product.name in npc_prices.keys():
+                product.price_npc = npc_prices[product.name]
                 
-        #Coin manuell setzen, dieser ist in der Tabelle der Hilfe nicht enthalten
-        coins = self.getProductByName('Coins')
-        coins.setPriceNPC((300.0))
+        # Coin manuell setzen, dieser ist in der Tabelle der Hilfe nicht enthalten
+        coins = self.get_product_by_name('Coins')
+        coins.price_npc = float(300)
     
-    def getProductByID(self, id):
+    def get_product_by_id(self, product_id):
         for product in self.__products:
-            if int(id) == int(product.getID()): return product
+            if int(product_id) == product.id:
+                return product
 
     def get_product_by_crop_id(self, crop_id):
         for product in self.__products:
-            if int(crop_id) == int(product.get_crop_id()):
+            if int(crop_id) == product.crop_id:
                 return product
             
-    def getProductByName(self, name : str):
+    def get_product_by_name(self, name):
         for product in self.__products:
-            if (name.lower() == product.getName().lower()): return product
+            if name.lower() == product.name.lower():
+                return product
         return None
         
-    def getListOfAllProductIDs(self):
-        
-        productIDList = []
-        
-        for product in self.__products:
-            id = product.getID()
-            productIDList.append(id)
-            
-        return productIDList
+    def get_list_of_all_product_ids(self):
+        return [product.id for product in self.__products]
 
-    def initAllProducts(self):
+    def init_products(self):
         """
         Initialisiert alle Produkte.
         """
-        products = http_connection.get_all_product_informations()
-        jProducts = json.loads(products)
-        dictProducts = dict(jProducts)
-        keys = dictProducts.keys()
-        keys = sorted(keys)
+        products = dict(json.loads(http_connection.get_all_product_informations()))
         # Nicht genutzte Attribute: img, imgPhase, fileext, clear, edge, pieces, speedup_cooldown in Kategorie z
-        for key in keys:
-                # 999 ist nur ein Testeintrag und wird nicht benötigt.
+        for key in sorted(products.keys()):
+            # 999 ist nur ein Testeintrag und wird nicht benötigt.
             if key == '999':
                 continue
 
-            name = dictProducts[key]['name'].replace('&nbsp;', ' ')
+            name = products[key]['name'].replace('&nbsp;', ' ')
             self.__products.append(Product(id=int(key),
-                                           cat=dictProducts[key]['category'],
-                                           sx=dictProducts[key]['sx'],
-                                           sy=dictProducts[key]['sy'],
+                                           cat=products[key]['category'],
+                                           sx=products[key]['sx'],
+                                           sy=products[key]['sy'],
                                            name=name.encode('utf-8'),
-                                           lvl=dictProducts[key]['level'],
-                                           crop_id=dictProducts[key]['crop'],
-                                           plantable=dictProducts[key]['plantable'],
-                                           time=dictProducts[key]['time']))
+                                           lvl=products[key]['level'],
+                                           crop_id=products[key]['crop'],
+                                           plantable=products[key]['plantable'],
+                                           time=products[key]['time']))
                 
-        self.__setAllPricesOfNPC()
+        self.set_all_prices()
     
-    def printAll(self):
-        sortedProducts = sorted(self.__products, key=lambda x:x.getName().lower())
-        for product in sortedProducts:
-            product.printAll()
+    def print_all(self):
+        for product in sorted(self.__products, key=lambda x: x.name.lower()):
+            product.print_all()
 
-    def printAllPlants(self):
-        sortedProducts = sorted(self.__products, key=lambda x:x.getName().lower())
-        for product in sortedProducts:
-            if not product.isPlant():
+    def print_all_plants(self):
+        for product in sorted(self.__products, key=lambda x: x.name.lower()):
+            if not product.is_plant():
                 continue
 
-            product.printAll()
+            product.print_all()
 
 
 product_data = ProductData()
