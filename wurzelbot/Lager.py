@@ -16,6 +16,26 @@ class Box:
     def is_empty(self):
         return self.quantity <= 0
 
+    @staticmethod
+    def merge_boxes(boxes1, boxes2):
+        merged_boxes = {}
+
+        # Add all boxes from the first set to the dictionary
+        for box in boxes1:
+            merged_boxes[box.product] = box.quantity
+
+        # Add all boxes from the second set to the dictionary,
+        # updating the quantity if the product already exists
+        for box in boxes2:
+            if box.product in merged_boxes:
+                merged_boxes[box.product] += box.quantity
+            else:
+                merged_boxes[box.product] = box.quantity
+
+        # Convert the dictionary back into a list of Box objects
+        merged_boxes_list = [Box(product, quantity) for product, quantity in merged_boxes.items()]
+        return merged_boxes_list
+
 
 class Storage:
     
@@ -44,6 +64,9 @@ class Storage:
     def get_products_from_category(self, cat):
         return [box.product for box in self.__storage if box.product.category == cat]
 
+    def get_boxes_from_category(self, cat):
+        return [box for box in self.__storage if box.product.category == cat]
+
     def get_ordered_products_from_category(self, cat):
         return [box.product for box in sorted(self.__storage) if box.product.category == cat]
 
@@ -51,6 +74,7 @@ class Storage:
         for box in self.__storage:
             if box.product == product:
                 return box
+        return None
 
     def get_stock_from_product(self, product):
         return self.get_box_for_product(product).quantity

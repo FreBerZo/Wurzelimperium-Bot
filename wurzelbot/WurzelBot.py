@@ -100,7 +100,7 @@ class WurzelBot(object):
             if garden_manager.has_empty_tiles():
                 storage.print()
                 while garden_manager.has_empty_tiles():
-                    stock = storage.get_ordered_products_from_category(Category.VEGETABLES)
+                    stock = garden_manager.get_potential_plants()
                     if len(stock) == 0:
                         logging.info("Das Lager ist leer.")
                         break

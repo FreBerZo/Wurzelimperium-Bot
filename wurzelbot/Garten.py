@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Produktdaten import product_data
+from wurzelbot.Produktdaten import product_data, Category
 from wurzelbot.Spieler import spieler
-from wurzelbot.Lager import storage
+from wurzelbot.Lager import storage, Box
 import logging
 import time
 import datetime
@@ -28,10 +28,14 @@ class PlantCrop(Crop):
 
     def is_watered(self):
         # watering a plant holds for one day
-        return self.watered_time + datetime.timedelta(days=1).total_seconds() > int(time.time())
+        return self.next_water_time() > int(time.time())
 
     def get_first_tile(self):
         return self.tiles[0]
+
+    def next_water_time(self):
+        # watering a plant holds for one day
+        return self.watered_time + datetime.timedelta(days=1).total_seconds()
 
 
 class DecorationCrop(Crop):
@@ -282,9 +286,12 @@ class GardenManager:
         for garden in self.gardens:
             for crop in garden.get_crops_from_class(PlantCrop):
                 # to group up all plants who can be harvested in a close timeframe the latest is taken
-                if earliest is None or earliest - 60 > crop.harvest_time \
-                        or (crop.harvest_time > earliest > crop.harvest_time - 60):
+                if earliest is None or earliest - 600 > crop.harvest_time \
+                        or (crop.harvest_time > earliest > crop.harvest_time - 600):
                     earliest = crop.harvest_time
+                next_water_time = crop.next_water_time()
+                if earliest - 600 > next_water_time or (next_water_time > earliest > next_water_time - 600):
+                    earliest = next_water_time
         return earliest
 
     def get_empty_tiles(self):
@@ -300,6 +307,26 @@ class GardenManager:
                     if garden.plant_fits_at(product.size, x, y):
                         return True
         return False
+
+    def get_num_of_planted_plants(self):
+        crops = [crop for garden in self.gardens for crop in garden.get_crops_from_class(PlantCrop)]
+
+        products = {}
+        for crop in crops:
+            if crop.product in products.keys():
+                products[crop.product] += 1
+            else:
+                products[crop.product] = 1
+        return [Box(product, quantity) for product, quantity in products.items()]
+
+    def get_potential_plants(self):
+        """Returns all owned seeds ordered by the quantity in storage and potential seeds after harvesting"""
+        boxes = list(storage.get_boxes_from_category(Category.VEGETABLES))
+        for storage_box in boxes:
+            for planted_box in self.get_num_of_planted_plants():
+                if storage_box.product == planted_box.product:
+                    storage_box.quantity += planted_box.quantity * planted_box.product.harvest_quantity
+        return [box.product for box in sorted(boxes)]
 
     def update_all(self):
         for garden in self.gardens:

@@ -25,7 +25,7 @@ class Category(Enum):
 
 
 class Product:
-    def __init__(self, id, cat, sx, sy, name, lvl, crop_id, plantable, time):
+    def __init__(self, id, cat, sx, sy, name, lvl, crop, plantable, time):
         self.id = id
         if cat == '':
             cat = 'c'
@@ -33,7 +33,7 @@ class Product:
         self.size = (sx, sy)
         self.name = name.decode('UTF-8')
         self.level = lvl
-        self.crop_id = crop_id
+        self.harvest_quantity = crop
         self.is_plantable = plantable
         self.time_until_harvest = time
         self.price_npc = None
@@ -111,7 +111,7 @@ class ProductData:
                                            sy=products[key]['sy'],
                                            name=name.encode('utf-8'),
                                            lvl=products[key]['level'],
-                                           crop_id=products[key]['crop'],
+                                           crop=products[key]['crop'],
                                            plantable=products[key]['plantable'],
                                            time=products[key]['time']))
                 
