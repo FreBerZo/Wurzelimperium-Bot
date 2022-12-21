@@ -37,6 +37,11 @@ class Product:
         self.is_plantable = plantable
         self.time_until_harvest = time
         self.price_npc = None
+        # note that not yet unlocked plants are not tradable
+        self.is_tradable = False
+
+    def __str__(self):
+        return self.name
 
     def is_plant(self):
         return self.category == Category.VEGETABLES
@@ -61,7 +66,7 @@ class ProductData:
     def __init__(self):
         self.__products = []
     
-    def set_all_prices(self):
+    def load_prices(self):
         """
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
         """
@@ -73,6 +78,10 @@ class ProductData:
         # Coin manuell setzen, dieser ist in der Tabelle der Hilfe nicht enthalten
         coins = self.get_product_by_name('Coins')
         coins.price_npc = float(300)
+
+    def load_tradable_products(self):
+        for product_id in http_connection.get_all_tradeable_products_from_overview():
+            self.get_product_by_id(product_id).is_tradable = True
     
     def get_product_by_id(self, product_id):
         for product in self.__products:
@@ -89,6 +98,9 @@ class ProductData:
             if name.lower() == product.name.lower():
                 return product
         return None
+
+    def get_tradable_plants(self):
+        return [product for product in self.__products if product.is_tradable and product.is_plant()]
         
     def get_list_of_all_product_ids(self):
         return [product.id for product in self.__products]
@@ -115,7 +127,8 @@ class ProductData:
                                            plantable=products[key]['plantable'],
                                            time=products[key]['time']))
                 
-        self.set_all_prices()
+        self.load_prices()
+        self.load_tradable_products()
     
     def print_all(self):
         for product in sorted(self.__products, key=lambda x: x.name.lower()):

@@ -819,12 +819,10 @@ class HTTPConnection(object):
                     # Falls es mehrere seiten gibt.
                     for i in range(1, len(table) - 1):
                         anzahl = table[i][0].text
-                        anzahl = anzahl.encode('utf-8')
                         anzahl = anzahl.replace('.', '')
 
                         preis = table[i][3].text
-                        preis = preis.encode('utf-8')
-                        preis = preis.replace('\xc2\xa0wT', '')
+                        preis = preis.replace('wT', '')
                         preis = preis.replace('.', '')
                         preis = preis.replace(',', '.')
                         # produkt = table[i][1][0].text
@@ -1008,7 +1006,7 @@ class HTTPConnection(object):
         try:
             response, content = self.__send_request('stadt/markt.php?show=overview')
             self.__check_http_ok(response)
-            tradeableProducts = re.findall(r'markt\.php\?order=p&v=([0-9]{1,3})&filter=1', content)
+            tradeableProducts = re.findall(r'markt\.php\?order=p&v=([0-9]{1,3})&filter=1', str(content))
         except:
             pass  # TODO: exception definieren
         else:

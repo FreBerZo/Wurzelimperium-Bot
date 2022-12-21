@@ -10,9 +10,11 @@ from wurzelbot.Spieler import spieler, Login
 from wurzelbot.HTTPCommunication import http_connection
 from wurzelbot.Messenger import messenger
 from wurzelbot.Garten import garden_manager
+from wurzelbot.gardener import gardener
 from wurzelbot.Lager import storage
 from wurzelbot.Produktdaten import product_data, Category
 from wurzelbot.collector import collector
+from wurzelbot.Marktplatz import trader
 import datetime
 import time
 import logging
@@ -72,6 +74,7 @@ class WurzelBot(object):
 
         spieler.accountLogin = loginDaten
         storage.update_storage()
+        trader.load_wimp_data()
 
     def exitBot(self):
         """
@@ -96,11 +99,11 @@ class WurzelBot(object):
     def auto_plant(self):
         while True:
             collector.collect_daily_login_bonus()
-            garden_manager.harvest()
+            gardener.harvest()
             if garden_manager.has_empty_tiles():
                 storage.print()
                 while garden_manager.has_empty_tiles():
-                    stock = garden_manager.get_potential_plants()
+                    stock = gardener.get_potential_plants()
                     if len(stock) == 0:
                         logging.info("Das Lager ist leer.")
                         break
@@ -111,8 +114,10 @@ class WurzelBot(object):
                             break
                     if plant is None:
                         break
-                    garden_manager.plant(plant)
-            garden_manager.water()
+                    gardener.plant(plant)
+            gardener.water()
+
+            trader.reject_bad_wimp_offers()
 
             self.sleep_bot_until_next_action()
 

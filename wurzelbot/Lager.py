@@ -10,6 +10,9 @@ class Box:
         self.product = product
         self.quantity = quantity
 
+    def __str__(self):
+        return "{}: {}".format(self.product.name, self.quantity)
+
     def __lt__(self, other):
         return self.quantity < other.quantity
 
