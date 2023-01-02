@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
+import math
+import datetime
 
 from wurzelbot.HTTPCommunication import http_connection
 from wurzelbot.Garten import garden_manager
@@ -9,7 +11,7 @@ from wurzelbot.Produktdaten import product_data
 from wurzelbot.Spieler import spieler
 from wurzelbot.Lager import storage
 from wurzelbot.utils import cache
-import datetime
+
 
 '''
 Created on 15.05.2019
@@ -42,7 +44,7 @@ class Trader:
                 if worth * 0.8 > offered_money:
                     http_connection.decline_wimp(wimp_id)
 
-    @cache(86400)
+    # @cache(86400)
     def get_products_ordered_by_profitability(self):
         product_wins = []
         for product in product_data.get_tradable_plants():
@@ -136,7 +138,7 @@ class Trader:
         if money is None:
             money = spieler.money - self.min_money
         if money <= 0:
-            return
+            return 0
         offers = http_connection.get_cheapest_offers_for(product)
         rest_quantity = quantity
         for offer in offers:
@@ -166,27 +168,31 @@ class Trader:
             if rest_quantity <= 0 or money < offer_price:
                 break
 
-        if rest_quantity > 0:
-            # TODO: what to do in this case?
-            pass
+        bought_quantity = quantity - rest_quantity
 
-        logging.info('bought {} {}s'.format(quantity - rest_quantity, product))
+        logging.info('bought {} {}'.format(bought_quantity, product))
 
         spieler.load_user_data()
+
+        return bought_quantity
 
     def sell_to_marketplace(self, product, quantity, price):
+        price = round(price, 2)
         http_connection.sell_to_marketplace(product, quantity, price)
+        logging.info("Sold {} {} for {}.".format(quantity, product, price))
         spieler.load_user_data()
 
-    def sell_max_of(self, product):
+    def sell(self, product, sell_amount=-1):
         real_stock = storage.get_stock_from_product(product)
         if real_stock == 0:
             return
 
         potential_stock = gardener.get_potential_quantity_of(product)
         min_quantity = storage.get_box_for_product(product).min_quantity()
-        sell_amount = potential_stock - min_quantity
-        if sell_amount <= 0:
+        potential_sell_amount = potential_stock - min_quantity
+        if sell_amount == -1 or sell_amount > potential_sell_amount:
+            sell_amount = potential_sell_amount
+        if sell_amount == 0:
             return
         if sell_amount > real_stock:
             sell_amount = real_stock

@@ -460,11 +460,11 @@ class HTTPConnection(object):
         except:
             raise
 
-    def remove_weed_on_field_in_garden(self, gardenID, fieldID):
+    def remove_weed(self, garden_id, field_id):
         """Befreit ein Feld im Garten von Unkraut."""
-        self._change_garden(gardenID)
+        self._change_garden(garden_id)
         try:
-            response, content = self.__send_request('save/abriss.php?tile={}'.format(fieldID), 'POST')
+            response, content = self.__send_request('save/abriss.php?tile={}'.format(field_id), 'GET')
             self.__check_http_ok(response)
             jContent = self.__generate_json_and_check_success(content)
             return jContent['success']

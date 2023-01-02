@@ -77,8 +77,6 @@ class WurzelBot(object):
         storage.update_storage()
         trader.load_wimp_data()
 
-        objective_manager.create_objectives()
-
     def exitBot(self):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
@@ -107,7 +105,8 @@ class WurzelBot(object):
 
             objective_finished = True
             while objective_finished:
-                objective_manager.run_objectives()
+                objective_manager.create_objectives()
+                objective_finished = objective_manager.run_objectives()
 
             gardener.water()
 

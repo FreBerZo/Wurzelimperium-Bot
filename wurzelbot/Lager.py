@@ -24,7 +24,7 @@ class Box:
         return gardener.get_potential_quantity_of(self.product)
 
     def min_quantity(self):
-        from Garten import garden_manager
+        from wurzelbot.Garten import garden_manager
         return int(garden_manager.get_num_of_plantable_tiles() / (self.product.size[0] * self.product.size[1]))
 
     def is_min_quantity(self):
