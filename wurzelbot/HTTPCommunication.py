@@ -11,6 +11,7 @@ import json, re, httplib2, yaml, time, logging, math, io
 from http.cookies import SimpleCookie
 from wurzelbot.Session import Session
 from lxml import html, etree
+from bs4 import BeautifulSoup
 
 # Defines
 HTTP_STATE_OK = 200
@@ -249,6 +250,25 @@ class HTTPConnection(object):
         except KeyError:
             logging.debug(jContent['table'])
             raise JSONError('Info:' + info + " not found.")
+
+    def get_product_ids_from_shop(self, shop_id):
+        try:
+            address = 'stadt/shop.php?s={}'.format(shop_id)
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+        except:
+            raise
+        else:
+            soup = BeautifulSoup(content, 'html.parser')
+            product_ids = []
+            i = 0
+            while True:
+                input_field = soup.find(id='produkt_{}'.format(i))
+                if input_field is None:
+                    break
+                i += 1
+                product_ids.append(input_field['value'])
+            return product_ids
 
     def get_info_from_stats(self, info):
         """
@@ -792,6 +812,31 @@ class HTTPConnection(object):
         dictNPCPrices = self.__parse_npc_prices_from_html(content)
         return dictNPCPrices
 
+    def buy_from_shop(self, shop: int, productId: int, amount: int = 1):
+        parameter = urlencode({'s': shop,
+                               'page': 1,
+                               'change_page_only': 0,
+                               'produkt[0]': productId,
+                               'anzahl[0]': amount
+                               })
+        try:
+            header = {'Content-Type': 'application/x-www-form-urlencoded'}
+            response, content = self.__send_request('stadt/shop.php?s={}'.format(shop), 'POST', parameter, header)
+            self.__check_http_ok(response)
+        except:
+            raise
+
+    def buy_from_aqua_shop(self, productId: int, amount: int = 1):
+        adresse = 'ajax/ajax.php?products={}:{}&do=shopBuyProducts&type=aqua&token={}'\
+                  .format(productId, amount, self.__token)
+
+        try:
+            response, content = self.__send_request(f'{adresse}')
+            self.__check_http_ok(response)
+        except:
+            return ''
+
+    # marketplace
     def get_offers_from_product(self, prod_id):
         """Gibt eine Liste mit allen Angeboten eines Produkts zurück."""
         nextPage = True
@@ -837,29 +882,59 @@ class HTTPConnection(object):
 
         return listOffers
 
-    def buy_from_shop(self, shop: int, productId: int, amount: int = 1):
-        parameter = urlencode({'s': shop,
-                               'page': 1,
-                               'change_page_only': 0,
-                               'produkt[0]': productId,
-                               'anzahl[0]': amount
-                               })
-        try:
-            header = {'Content-Type': 'application/x-www-form-urlencoded'}
-            response, content = self.__send_request('stadt/shop.php?s={}'.format(shop), 'POST', parameter, header)
-            self.__check_http_ok(response)
-        except:
-            raise
-
-    def buy_from_aqua_shop(self, productId: int, amount: int = 1):
-        adresse = 'ajax/ajax.php?products={}:{}&do=shopBuyProducts&type=aqua&token={}'\
-                  .format(productId, amount, self.__token)
+    def get_cheapest_offers_for(self, product):
+        """ returns only the first page of offers for a certain product from the marketplace """
+        list_offers = []
 
         try:
-            response, content = self.__send_request(f'{adresse}')
+            address = 'stadt/markt.php?order=p&v={}&filter=1&page={}'.format(str(product.id), 1)
+            response, content = self.__send_request(address)
             self.__check_http_ok(response)
         except:
-            return ''
+            pass  # TODO: exception definieren
+        else:
+            matches = re.findall(r'buy\((.*?)\)', str(content))
+            for match in matches:
+                attributes = match.replace("\\'", "").split(',')
+                list_offers.append({
+                    'id': attributes[0],
+                    'amount': int(attributes[1]),
+                    'price_verbose': "{},{}".format(attributes[2], attributes[3]),
+                    'price': float(attributes[-2]),
+                    'product_name': attributes[-1]
+                })
+
+        return list_offers
+
+    def buy_from_marketplace(self, product, offer, quantity):
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        parameter = urlencode({
+            'buy_menge': quantity,
+            'buy_now': 'kaufen',
+            'buy_max': offer.get('amount'),
+            'buy_id': offer.get('id'),
+            'buy_price': offer.get('price'),
+            'markt_buy_nr': '',
+            'page': 1,
+            'order': 'p',
+            'v': product.id,
+            'filter': 1
+        })
+        response, content = self.__send_request('stadt/markt.php', 'POST', parameter, header)
+        self.__check_http_ok(response)
+
+    def sell_to_marketplace(self, product, quantity, price):
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        price1, price2 = str(price).split('.')
+        parameter = urlencode({
+            'p_anzahl': quantity,
+            'p_preis1': price1,
+            'p_preis2': price2,
+            'p_id': product.id,
+            'verkaufe_markt': 'OK',
+        })
+        response, content = self.__send_request('stadt/marktstand.php', 'POST', parameter, header)
+        self.__check_http_ok(response)
 
     ######################
     # Quests and Bonuses #

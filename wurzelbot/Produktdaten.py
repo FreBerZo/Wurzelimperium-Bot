@@ -8,6 +8,7 @@ Created on 23.05.2019
  
 import json
 from wurzelbot.HTTPCommunication import http_connection
+from wurzelbot.trading import Shop
 from enum import Enum
 
 
@@ -39,6 +40,7 @@ class Product:
         self.price_npc = None
         # note that not yet unlocked plants are not tradable
         self.is_tradable = False
+        self.buy_in_shop = None
 
     def __str__(self):
         return self.name
@@ -82,6 +84,15 @@ class ProductData:
     def load_tradable_products(self):
         for product_id in http_connection.get_all_tradeable_products_from_overview():
             self.get_product_by_id(product_id).is_tradable = True
+
+    def load_shops(self):
+        # TODO: add flower shop, but it's more complicated because it's only open at wed and sat
+        shops = [Shop.TREE, Shop.FARM, Shop.DECORATION]
+
+        for shop in shops:
+            product_ids = http_connection.get_product_ids_from_shop(shop.value)
+            for product_id in product_ids:
+                self.get_product_by_id(product_id).buy_in_shop = shop
     
     def get_product_by_id(self, product_id):
         for product in self.__products:
@@ -129,6 +140,7 @@ class ProductData:
                 
         self.load_prices()
         self.load_tradable_products()
+        self.load_shops()
     
     def print_all(self):
         for product in sorted(self.__products, key=lambda x: x.name.lower()):

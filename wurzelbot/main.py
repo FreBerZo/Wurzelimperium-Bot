@@ -41,7 +41,7 @@ def main():
     wurzel_bot.launchBot()
 
     # automatisches pflanzen starten
-    wurzel_bot.auto_plant()
+    wurzel_bot.run_objectives()
 
 
 if __name__ == "__main__":

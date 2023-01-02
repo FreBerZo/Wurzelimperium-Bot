@@ -308,11 +308,20 @@ class GardenManager:
                         return True
         return False
 
-    def get_num_of_planted_plants(self):
-        crops = [crop for garden in self.gardens for crop in garden.get_crops_from_class(PlantCrop)]
+    def get_num_of_plantable_tiles(self):
+        num_of_tiles = 0
+        for garden in self.gardens:
+            num_of_tiles += len(garden.get_tiles_from_class(PlantCrop))
+            num_of_tiles += len(garden.get_empty_tiles())
 
+        return num_of_tiles
+
+    def get_crops_flat_from_class(self, crop_class):
+        return [crop for garden in self.gardens for crop in garden.get_crops_from_class(crop_class)]
+
+    def get_num_of_planted_plants(self):
         products = {}
-        for crop in crops:
+        for crop in self.get_crops_flat_from_class(PlantCrop):
             if crop.product in products.keys():
                 products[crop.product] += 1
             else:

@@ -15,6 +15,7 @@ from wurzelbot.Lager import storage
 from wurzelbot.Produktdaten import product_data, Category
 from wurzelbot.collector import collector
 from wurzelbot.Marktplatz import trader
+from wurzelbot.objective import objective_manager
 import datetime
 import time
 import logging
@@ -76,6 +77,8 @@ class WurzelBot(object):
         storage.update_storage()
         trader.load_wimp_data()
 
+        objective_manager.create_objectives()
+
     def exitBot(self):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
@@ -95,6 +98,22 @@ class WurzelBot(object):
         logging.info("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
         time.sleep(sleep_time)
         self.launchBot()
+
+    def run_objectives(self):
+        while True:
+            collector.collect_daily_login_bonus()
+
+            gardener.harvest()
+
+            objective_finished = True
+            while objective_finished:
+                objective_manager.run_objectives()
+
+            gardener.water()
+
+            # trader.reject_bad_wimp_offers()
+
+            self.sleep_bot_until_next_action()
 
     def auto_plant(self):
         while True:

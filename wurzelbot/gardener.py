@@ -1,12 +1,19 @@
 from wurzelbot.HTTPCommunication import http_connection
 from wurzelbot.Lager import storage
 from wurzelbot.Produktdaten import Category
-from wurzelbot.Garten import garden_manager
+from wurzelbot.Garten import garden_manager, PlantCrop
 from wurzelbot.Spieler import spieler
 import logging
 
 
 class Gardener:
+    def get_potential_quantity_of(self, product):
+        planted_quantity = 0
+        for crop in garden_manager.get_crops_flat_from_class(PlantCrop):
+            if crop.product == product:
+                planted_quantity += 1
+        return storage.get_stock_from_product(product) + planted_quantity * product.harvest_quantity
+
     def get_potential_plants(self):
         """Returns all owned seeds ordered by the quantity in storage and potential seeds after harvesting"""
         boxes = list(storage.get_boxes_from_category(Category.VEGETABLES))
