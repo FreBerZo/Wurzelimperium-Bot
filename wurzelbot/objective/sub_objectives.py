@@ -80,8 +80,9 @@ class FarmMoney(SubObjective):
 
         if storage.get_stock_from_product(self.plant) < len(garden_manager.get_empty_tiles()):
             with Reservator(self, Resource.MONEY, -1) as reserved_money_quantity:
-                buy_quantity = len(garden_manager.get_empty_tiles()) - storage.get_stock_from_product(self.plant)
-                trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
+                if reserved_money_quantity > 0:
+                    buy_quantity = len(garden_manager.get_empty_tiles()) - storage.get_stock_from_product(self.plant)
+                    trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
 
         self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.plant)
         if self.prev_plant is not None:
@@ -107,8 +108,10 @@ class FarmMoney(SubObjective):
 
         # second method of money making: normal garden farming and selling to market
 
-        planted_plant = gardener.plant(self.plant, self.usable_tile_quantity)
-        planted_fallback_plant = gardener.plant(self.fallback_plant, self.usable_tile_quantity - planted_plant)
+        planted_plant = gardener.plant(self.plant, min(self.usable_tile_quantity, self.usable_plant_quantity))
+        self.usable_tile_quantity -= planted_plant
+        planted_fallback_plant = gardener.plant(self.fallback_plant,
+                                                min(self.usable_tile_quantity, self.usable_fallback_plant_quantity))
 
         sell_amount = self.usable_plant_quantity - planted_plant
         if sell_amount > 0:

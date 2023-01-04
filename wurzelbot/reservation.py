@@ -121,7 +121,7 @@ class Reservator:
 
     def __enter__(self):
         reserved_amount = reservation_manager.reserve(self.objective, self.resource, self.quantity, self.plant)
-        return reserved_amount if reserved_amount > 0 else None
+        return reserved_amount
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.reservation_was_overridden:

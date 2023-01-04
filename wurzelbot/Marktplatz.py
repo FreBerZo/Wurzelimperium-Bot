@@ -136,7 +136,7 @@ class Trader:
     def buy_cheapest_of(self, product, quantity, money=None):
         # TODO: what if shelf is full?
         if money is None:
-            money = spieler.money - self.min_money
+            money = spieler.money - self.min_money()
         if money <= 0:
             return 0
         offers = http_connection.get_cheapest_offers_for(product)
