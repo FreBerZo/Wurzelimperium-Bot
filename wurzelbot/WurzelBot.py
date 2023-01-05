@@ -37,41 +37,22 @@ class WurzelBot(object):
         """
         loginDaten = Login(server=self.server, user=self.user_name, password=self.password)
 
-        try:
-            http_connection.log_in(loginDaten)
-        except:
-            logging.error('Problem beim Starten des Wurzelbots.')
-            return
-
+        http_connection.log_in(loginDaten)
         logging.info('Login erfolgreich.')
 
-        try:
-            spieler.load_user_data()
-        except:
-            logging.error('UserDaten konnten nicht aktualisiert werden')
+        spieler.load_user_data()
 
         spieler.load_stats()
-        
-        try:
-            tmpHoneyFarmAvailability = http_connection.is_honey_farm_available(spieler.level)
-        except:
-            logging.error('Verfügbarkeit der Imkerei konnte nicht ermittelt werden.')
-        else:
-            spieler.setHoneyFarmAvailability(tmpHoneyFarmAvailability)
 
-        try:
-            tmpAquaGardenAvailability = http_connection.is_aqua_garden_available(spieler.level)
-        except:
-            logging.error('Verfügbarkeit des Wassergartens konnte nicht ermittelt werden.')
-        else:
-            spieler.setAquaGardenAvailability(tmpAquaGardenAvailability)
+        tmpHoneyFarmAvailability = http_connection.is_honey_farm_available(spieler.level)
+        spieler.setHoneyFarmAvailability(tmpHoneyFarmAvailability)
+
+        tmpAquaGardenAvailability = http_connection.is_aqua_garden_available(spieler.level)
+        spieler.setAquaGardenAvailability(tmpAquaGardenAvailability)
 
         product_data.init_products()
 
-        try:
-            garden_manager.init_gardens()
-        except:
-            logging.error('Anzahl der Gärten konnte nicht ermittelt werden.')
+        garden_manager.init_gardens()
 
         spieler.accountLogin = loginDaten
         storage.update_storage()
@@ -81,12 +62,8 @@ class WurzelBot(object):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
-        try:
-            http_connection.log_out()
-        except:
-            logging.error('Wurzelbot konnte nicht korrekt beendet werden.')
-        else:
-            logging.info('Logout erfolgreich.')
+        http_connection.log_out()
+        logging.info('Logout erfolgreich.')
 
     def sleep_bot_until_next_action(self):
         sleep_time = garden_manager.get_earliest_required_action() - int(time.time())
@@ -147,9 +124,4 @@ class WurzelBot(object):
         Eine Nachricht kann nur verschickt werden, wenn die E-Mail Adresse bestätigt ist.
         """
         if (spieler.isEMailAdressConfirmed()):
-            try:
-                messenger.writeMessage(spieler.user_name, recipients, subject, body)
-            except:
-                logging.error('Konnte keine Nachricht verschicken.')
-            else:
-                pass
+            messenger.writeMessage(spieler.user_name, recipients, subject, body)

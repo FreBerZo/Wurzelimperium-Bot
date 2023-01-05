@@ -49,10 +49,7 @@ class HTTPConnection(object):
             headers = self.__get_header()
         else:
             headers = {**self.__get_header(), **headers}
-        try:
-            return self.__webclient.request(url, method, body, headers)
-        except:
-            raise
+        return self.__webclient.request(url, method, body, headers)
 
     def __get_header(self):
         headers = {'Cookie': 'PHPSESSID={};wunr={}'.format(self.__Session.getSessionID(), self.__userID),
@@ -197,35 +194,27 @@ class HTTPConnection(object):
         headers = {'Content-type': 'application/x-www-form-urlencoded',
                    'Connection': 'keep-alive'}
 
-        try:
-            response, content = self.__webclient.request('https://www.{}/dispatch.php'.format(SERVER_DOMAIN),
-                                                         'POST',
-                                                         parameter,
-                                                         headers)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            self.__get_token_from_url(jContent['url'])
-            response, content = self.__webclient.request(jContent['url'], 'GET', headers=headers)
-            self.__check_http_found(response)
-        except:
-            raise
-        else:
-            cookie = SimpleCookie(response['set-cookie'])
-            cookie.load(str(response["set-cookie"]).replace("secure, ", "", -1))
-            self.__Session.openSession(cookie['PHPSESSID'].value, str(loginDaten.server), SERVER_DOMAIN)
-            self.__cookie = cookie
-            self.__userID = cookie['wunr'].value
+        response, content = self.__webclient.request('https://www.{}/dispatch.php'.format(SERVER_DOMAIN),
+                                                     'POST',
+                                                     parameter,
+                                                     headers)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        self.__get_token_from_url(jContent['url'])
+        response, content = self.__webclient.request(jContent['url'], 'GET', headers=headers)
+        self.__check_http_found(response)
+        cookie = SimpleCookie(response['set-cookie'])
+        cookie.load(str(response["set-cookie"]).replace("secure, ", "", -1))
+        self.__Session.openSession(cookie['PHPSESSID'].value, str(loginDaten.server), SERVER_DOMAIN)
+        self.__cookie = cookie
+        self.__userID = cookie['wunr'].value
 
     def log_out(self):
         """Logout des Spielers inkl. Löschen der Session."""
-        # TODO: Was passiert beim Logout einer bereits ausgeloggten Session
-        try:  # content ist beim Logout leer
-            response, content = self.__send_request('main.php?page=logout')
-            self.__check_http_found(response)
-            cookie = SimpleCookie(response['set-cookie'])
-            self.__check_session_deleted(cookie)
-        except:
-            raise
+        response, content = self.__send_request('main.php?page=logout')
+        self.__check_http_found(response)
+        cookie = SimpleCookie(response['set-cookie'])
+        self.__check_session_deleted(cookie)
 
     # general info
     def __get_info_from_json_content(self, jContent, info):
@@ -240,35 +229,26 @@ class HTTPConnection(object):
             'OpuntiaQuest': 'table.10',
             'SaguaroQuest': 'table.11'
         }
-
-        try:
-            keys = mapping[info].split('.')
-            result = jContent
-            for key in keys:
-                result = result[key]
-            return result
-        except KeyError:
-            logging.debug(jContent['table'])
-            raise JSONError('Info:' + info + " not found.")
+        keys = mapping[info].split('.')
+        result = jContent
+        for key in keys:
+            result = result[key]
+        return result
 
     def get_product_ids_from_shop(self, shop_id):
-        try:
-            address = 'stadt/shop.php?s={}'.format(shop_id)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            raise
-        else:
-            soup = BeautifulSoup(content, 'html.parser')
-            product_ids = []
-            i = 0
-            while True:
-                input_field = soup.find(id='produkt_{}'.format(i))
-                if input_field is None:
-                    break
-                i += 1
-                product_ids.append(input_field['value'])
-            return product_ids
+        address = 'stadt/shop.php?s={}'.format(shop_id)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        soup = BeautifulSoup(content, 'html.parser')
+        product_ids = []
+        i = 0
+        while True:
+            input_field = soup.find(id='produkt_{}'.format(i))
+            if input_field is None:
+                break
+            i += 1
+            product_ids.append(input_field['value'])
+        return product_ids
 
     def get_info_from_stats(self, info):
         """
@@ -279,49 +259,33 @@ class HTTPConnection(object):
         return self.__get_info_from_json_content(self.get_stats(), info)
 
     def get_stats(self):
-        try:
-            address = 'ajax/ajax.php?do=statsGetStats&which=0&start=0' \
-                      '&additional={}&token={}'.format(self.__userID, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content.decode('UTF-8'))
-        except:
-            raise
-        else:
-            return jContent
+        address = 'ajax/ajax.php?do=statsGetStats&which=0&start=0' \
+                  '&additional={}&token={}'.format(self.__userID, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content.decode('UTF-8'))
+        return jContent
 
     def get_garden_info(self):
-        try:
-            address = '/ajax/ajax.php?do=citymap_init&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content.decode('UTF-8'))
-        except:
-            raise
-        else:
-            return jContent['data']
+        address = '/ajax/ajax.php?do=citymap_init&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content.decode('UTF-8'))
+        return jContent['data']
 
     def read_user_data_from_server(self):
         """Ruft eine Updatefunktion im Spiel auf und verarbeitet die empfangenen userdaten."""
-        try:
-            response, content = self.__send_request('ajax/menu-update.php')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_success(content)
-        except:
-            raise
-        else:
-            return jContent
+        response, content = self.__send_request('ajax/menu-update.php')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_success(content)
+        return jContent
 
     def check_if_email_address_is_confirmed(self):
         """Prüft, ob die E-Mail-Adresse im Profil bestätigt ist."""
-        try:
-            response, content = self.__send_request('nutzer/profil.php')
-            self.__check_http_ok(response)
-        except:
-            raise
-        else:
-            result = re.search(r'Unbestätigte Email:', content)
-            return result is None
+        response, content = self.__send_request('nutzer/profil.php')
+        self.__check_http_ok(response)
+        result = re.search(r'Unbestätigte Email:', content)
+        return result is None
 
     # TODO: I don't know what this is, maybe redo or remove
     def get_user_list(self, iStart, iEnd):
@@ -344,26 +308,19 @@ class HTTPConnection(object):
         print(iCalls)
         for i in range(iCalls):
             print(i)
-            try:
-                address = f'ajax/ajax.php?do=statsGetStats&which=1&start={str(iStartCorr)}' \
-                          f'&showMe=0&additional=0&token={self.__token}'
-                response, content = self.__send_request(address)
-                self.__check_http_ok(response)
-                jContent = self.__generate_json_and_check_ok(content)
-            except:
-                raise
-            else:
-                try:
-                    for j in jContent['table']:
-                        result = re.search(
-                            r'<tr><td class=".*">(.*)<\/td><td class=".*tag">(.*)<\/td><td class=".*uname">([^<]*)<.*class=".*pkt">(.*)<\/td><\/tr>',
-                            j)
-                        userList['Nr'].append(str(result.group(1)).replace('.', ''))
-                        userList['Gilde'].append(str(result.group(2)))
-                        userList['Name'].append(str(result.group(3).encode('utf-8')).replace('&nbsp;', ''))
-                        userList['Punkte'].append(int(str(result.group(4).replace('.', ''))))
-                except:
-                    raise
+            address = f'ajax/ajax.php?do=statsGetStats&which=1&start={str(iStartCorr)}' \
+                      f'&showMe=0&additional=0&token={self.__token}'
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            for j in jContent['table']:
+                result = re.search(
+                    r'<tr><td class=".*">(.*)<\/td><td class=".*tag">(.*)<\/td><td class=".*uname">([^<]*)<.*class=".*pkt">(.*)<\/td><\/tr>',
+                    j)
+                userList['Nr'].append(str(result.group(1)).replace('.', ''))
+                userList['Gilde'].append(str(result.group(2)))
+                userList['Name'].append(str(result.group(3).encode('utf-8')).replace('&nbsp;', ''))
+                userList['Punkte'].append(int(str(result.group(4).replace('.', ''))))
 
             iStartCorr = iStartCorr + 100
 
@@ -412,75 +369,56 @@ class HTTPConnection(object):
 
     def _change_garden(self, gardenID):
         """Wechselt den Garten."""
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            self.__generate_json_and_check_ok(content)
-        except:
-            raise
+        address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(gardenID), self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        self.__generate_json_and_check_ok(content)
 
     def get_garden_data(self, garden_id):
         """
         Gibt alle Daten zu einem Garten roh zurück.
         """
-        try:
-            address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(garden_id), str(self.__token))
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-        except:
-            raise
-        else:
-            return jContent
+        address = 'ajax/ajax.php?do=changeGarden&garden={}&token={}'.format(str(garden_id), str(self.__token))
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent
 
     def water_plant_in_garden(self, iGarten, iField, sFieldsToWater):
         """Bewässert die Pflanze iField mit der Größe sSize im Garten iGarten."""
-        try:
-            fields = ','.join([str(field) for field in sFieldsToWater])
-            address = 'save/wasser.php?feld[]={}&felder[]={}&cid={}&garden={}'\
-                      .format(str(iField), fields, self.__token, str(iGarten))
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            self.__generate_yaml_content_and_check_for_success(content.decode('UTF-8'))
-        except:
-            raise
+        fields = ','.join([str(field) for field in sFieldsToWater])
+        address = 'save/wasser.php?feld[]={}&felder[]={}&cid={}&garden={}' \
+            .format(str(iField), fields, self.__token, str(iGarten))
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        self.__generate_yaml_content_and_check_for_success(content.decode('UTF-8'))
 
     def harvest_garden(self, gardenID):
         """Erntet alle fertigen Pflanzen im Garten."""
-        try:
-            self._change_garden(gardenID)
-            address = 'ajax/ajax.php?do=gardenHarvestAll&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            jContent = json.loads(content)
+        self._change_garden(gardenID)
+        address = 'ajax/ajax.php?do=gardenHarvestAll&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        jContent = json.loads(content)
 
-            if jContent['status'] == 'error':
-                logging.info(jContent['message'])
-            elif jContent['status'] == 'ok':
-                msg = jContent['harvestMsg'].replace('<div>', '').replace('</div>', '\n').replace('&nbsp;', ' ')
-                logging.info(msg.strip())
-        except:
-            raise
+        if jContent['status'] == 'error':
+            logging.info(jContent['message'])
+        elif jContent['status'] == 'ok':
+            msg = jContent['harvestMsg'].replace('<div>', '').replace('</div>', '\n').replace('&nbsp;', ' ')
+            logging.info(msg.strip())
 
     def grow_plant(self, field, plant, gardenID, fields):
         """Baut eine Pflanze auf einem Feld an."""
-        try:
-            address = 'save/pflanz.php?pflanze[]={}&feld[]={}&felder[]={}&cid={}&garden={}'\
-                      .format(str(plant), str(field), ','.join([str(field) for field in fields]), self.__token, str(gardenID))
-            response, content = self.__send_request(address)
-        except:
-            raise
+        address = 'save/pflanz.php?pflanze[]={}&feld[]={}&felder[]={}&cid={}&garden={}' \
+            .format(str(plant), str(field), ','.join([str(field) for field in fields]), self.__token, str(gardenID))
+        response, content = self.__send_request(address)
 
     def remove_weed(self, garden_id, field_id):
         """Befreit ein Feld im Garten von Unkraut."""
         self._change_garden(garden_id)
-        try:
-            response, content = self.__send_request('save/abriss.php?tile={}'.format(field_id), 'GET')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_success(content)
-            return jContent['success']
-        except:
-            raise
+        response, content = self.__send_request('save/abriss.php?tile={}'.format(field_id), 'GET')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_success(content)
+        return jContent['success']
 
     # aqua garden
     # TODO: check if required (should be deprecated because of new garden presentation)
@@ -499,14 +437,11 @@ class HTTPConnection(object):
         """
         Ermittelt alle bepflanzten Felder im Wassergartens, die auch gegossen werden können und gibt diese zurück.
         """
-        try:
-            response, content = self.__send_request(
-                'ajax/ajax.php?do=watergardenGetGarden&token={}'.format(self.__token))
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return self.__find_plants_to_be_watered_from_json_content(jContent)
-        except:
-            raise
+        response, content = self.__send_request(
+            'ajax/ajax.php?do=watergardenGetGarden&token={}'.format(self.__token))
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return self.__find_plants_to_be_watered_from_json_content(jContent)
 
     def water_plant_in_aqua_garden(self, iField, sFieldsToWater):
         """Gießt alle Pflanzen im Wassergarten"""
@@ -516,12 +451,9 @@ class HTTPConnection(object):
         for i in listFieldsToWater:
             sFields += '&water[]={}'.format(i)
 
-        try:
-            address = 'ajax/ajax.php?do=watergardenCache{}&token={}'.format(sFields, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            raise
+        address = 'ajax/ajax.php?do=watergardenCache{}&token={}'.format(sFields, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
     def is_aqua_garden_available(self, iUserLevel):
         """
@@ -530,71 +462,51 @@ class HTTPConnection(object):
         Die Freischaltung wird anhand der Errungenschaften im Spiel geprüft.
         """
         if not (iUserLevel < 19):
-            try:
-                response, content = self.__send_request('ajax/achievements.php?token={}'.format(self.__token))
-                self.__check_http_ok(response)
-                jContent = self.__generate_json_and_check_ok(content)
-            except:
-                raise
-            else:
-                result = re.search(r'trophy_54.png\);[^;]*(gray)[^;^class$]*class', jContent['html'])
-                return result is None
+            response, content = self.__send_request('ajax/achievements.php?token={}'.format(self.__token))
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            result = re.search(r'trophy_54.png\);[^;]*(gray)[^;^class$]*class', jContent['html'])
+            return result is None
         else:
             return False
 
     # TODO: check if required (should be deprecated because of new garden presentation)
     def get_empty_fields_aqua(self):
-        try:
-            address = 'ajax/ajax.php?do=watergardenGetGarden&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            emptyAquaFields = self.__find_empty_aqua_fields_from_json_content(jContent)
-        except:
-            raise
-        else:
-            return emptyAquaFields
+        address = 'ajax/ajax.php?do=watergardenGetGarden&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        emptyAquaFields = self.__find_empty_aqua_fields_from_json_content(jContent)
+        return emptyAquaFields
 
     def harvest_aqua_garden(self):
         """Erntet alle fertigen Pflanzen im Garten."""
-        try:
-            address = 'ajax/ajax.php?do=watergardenHarvestAll&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            raise
+        address = 'ajax/ajax.php?do=watergardenHarvestAll&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
     def grow_aqua_plant(self, plant, field):
         """Baut eine Pflanze im Wassergarten an."""
         headers = self.__get_header()
         server = self.__get_url()
         adresse = '{}ajax/ajax.php?do=watergardenCache&plant[{}]={}&token={}'.format(server, plant, field, self.__token)
-        try:
-            response, content = self.__webclient.request(adresse, 'GET', headers=headers)
-        except:
-            raise
+        response, content = self.__webclient.request(adresse, 'GET', headers=headers)
 
     def remove_weed_on_field_in_aqua_garden(self, gardenID, fieldID):
         """Befreit ein Feld im Garten von Unkraut."""
         self._change_garden(gardenID)
-        try:
-            response, content = self.__send_request('save/abriss.php?tile={}'.format(fieldID), 'POST')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_success(content)
-            return jContent['success']
-        except:
-            raise
+        response, content = self.__send_request('save/abriss.php?tile={}'.format(fieldID), 'POST')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_success(content)
+        return jContent['success']
 
     # bee farm
     def is_honey_farm_available(self, iUserLevel):
         if not (iUserLevel < 10):
-            try:
-                response, content = self.__send_request('ajax/ajax.php?do=citymap_init&token={}'.format(self.__token))
-                self.__check_http_ok(response)
-                jContent = self.__generate_json_and_check_ok(content)
-                return jContent['data']['location']['bees']['bought'] == 1
-            except:
-                raise
+            response, content = self.__send_request('ajax/ajax.php?do=citymap_init&token={}'.format(self.__token))
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            return jContent['data']['location']['bees']['bought'] == 1
         else:
             return False
 
@@ -630,59 +542,45 @@ class HTTPConnection(object):
 
     def get_honey_farm_infos(self):
         """Funktion ermittelt, alle wichtigen Informationen der Bienengarten und gibt diese aus."""
-        try:
-            response, content = self.__send_request('ajax/ajax.php?do=bees_init&token={}'.format(self.__token))
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            honeyQuestNr = jContent['questnr']
-            honeyQuest = self.__get_honey_quest(jContent)
-            hives = self.__get_available_hives(jContent)
-            hivetype = self.__get_hive_type(jContent)
-            return honeyQuestNr, honeyQuest, hives, hivetype
-        except:
-            raise
+        response, content = self.__send_request('ajax/ajax.php?do=bees_init&token={}'.format(self.__token))
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        honeyQuestNr = jContent['questnr']
+        honeyQuest = self.__get_honey_quest(jContent)
+        hives = self.__get_available_hives(jContent)
+        hivetype = self.__get_hive_type(jContent)
+        return honeyQuestNr, honeyQuest, hives, hivetype
 
     def change_hives_type_quest(self, hive, Questanforderung):
         """Ändert den Typ vom Bienenstock auf die Questanforderung."""
-        try:
-            address = 'ajax/ajax.php?do=bees_changehiveproduct&id={}' \
-                      '&pid={}&token={}'.format(str(hive), str(Questanforderung), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            pass
+        address = 'ajax/ajax.php?do=bees_changehiveproduct&id={}' \
+                  '&pid={}&token={}'.format(str(hive), str(Questanforderung), self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
     def harvest_bees(self):
         """Erntet den vollen Honigtopf"""
-        try:
-            response, content = self.__send_request('ajax/ajax.php?do=bees_fill&token={}'.format(self.__token))
-            self.__check_http_ok(response)
-        except:
-            raise
+        response, content = self.__send_request('ajax/ajax.php?do=bees_fill&token={}'.format(self.__token))
+        self.__check_http_ok(response)
 
     def send_bees(self, hive):
         """Sendet die Bienen für 2 Stunden"""
         # TODO: Check if bee is sent, sometimes 1 hives got skipped
-        try:
-            address = 'ajax/ajax.php?do=bees_startflight&id={}&tour=1&token={}'.format(str(hive), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            pass
+        address = 'ajax/ajax.php?do=bees_startflight&id={}&tour=1&token={}'.format(str(hive), self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
     # bonsai farm
     def is_bonsai_farm_available(self, iUserLevel):
         if iUserLevel < 10:
             return False
-        try:
-            response, content = self.__send_request('ajax/ajax.php?do=citymap_init&token={}'.format(self.__token))
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            location = jContent['data']['location']
-            bought_bonsai = jContent['data']['location']['bonsai']['bought']
-            return 'bonsai' in location and bought_bonsai == 1
-        except:
-            raise
+
+        response, content = self.__send_request('ajax/ajax.php?do=citymap_init&token={}'.format(self.__token))
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        location = jContent['data']['location']
+        bought_bonsai = jContent['data']['location']['bonsai']['bought']
+        return 'bonsai' in location and bought_bonsai == 1
 
     def __get_available_bonsai_slots(self, jContent):
         """Sucht im JSON Content nach verfügbaren bonsai und gibt diese zurück."""
@@ -701,26 +599,20 @@ class HTTPConnection(object):
     def get_bonsai_farm_infos(self):
         """Funktion ermittelt, alle wichtigen Informationen der Bonsai garten und gibt diese aus."""
         adresse = 'ajax/ajax.php?do=bonsai_init&token={}'.format(self.__token)
-        try:
-            response, content = self.__send_request(f'{adresse}')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            bonsaiquestnr = jContent['questnr']
-            bonsaiquest = self.__get_bonsai_quest(jContent)
-            bonsaislots = self.__get_available_bonsai_slots(jContent)
-            return bonsaiquestnr, bonsaiquest, bonsaislots, jContent
-        except:
-            raise
+        response, content = self.__send_request(f'{adresse}')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        bonsaiquestnr = jContent['questnr']
+        bonsaiquest = self.__get_bonsai_quest(jContent)
+        bonsaislots = self.__get_available_bonsai_slots(jContent)
+        return bonsaiquestnr, bonsaiquest, bonsaislots, jContent
 
     def cut_bonsai(self, tree, sissor):
         """Schneidet den Ast vom Bonsai"""
-        try:
-            address = 'ajax/ajax.php?do=bonsai_branch_click&slot={}' \
-                      '&scissor={}&cache=%5B1%5D&token={}'.format(str(tree), str(sissor), self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            pass
+        address = 'ajax/ajax.php?do=bonsai_branch_click&slot={}' \
+                  '&scissor={}&cache=%5B1%5D&token={}'.format(str(tree), str(sissor), self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
     ###########
     # Trading #
@@ -740,16 +632,13 @@ class HTTPConnection(object):
 
     def get_wimps_data(self, gardenID):
         """Get wimps data including wimp_id and list of products with amount"""
-        try:
-            self._change_garden(gardenID)
+        self._change_garden(gardenID)
 
-            response, content = self.__send_request('ajax/verkaufajax.php?do=getAreaData&token={}'.format(self.__token))
-            self.__check_http_ok(response)
+        response, content = self.__send_request('ajax/verkaufajax.php?do=getAreaData&token={}'.format(self.__token))
+        self.__check_http_ok(response)
 
-            jContent = self.__generate_json_and_check_ok(content)
-            return self.__find_wimps_data_from_json_content(jContent)
-        except:
-            raise
+        jContent = self.__generate_json_and_check_ok(content)
+        return self.__find_wimps_data_from_json_content(jContent)
 
     def sell_wimp_products(self, wimp_id):
         """
@@ -757,14 +646,11 @@ class HTTPConnection(object):
         @param wimp_id: str
         @return: dict of new balance of sold products
         """
-        try:
-            address = 'ajax/verkaufajax.php?do=accept&id={}&token={}'.format(wimp_id, self.__token)
-            response, content = self.__send_request(address, 'POST')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['newProductCounts']
-        except:
-            pass
+        address = 'ajax/verkaufajax.php?do=accept&id={}&token={}'.format(wimp_id, self.__token)
+        response, content = self.__send_request(address, 'POST')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['newProductCounts']
 
     def decline_wimp(self, wimp_id):
         """
@@ -772,14 +658,11 @@ class HTTPConnection(object):
         @param wimp_id: str
         @return: 'decline'
         """
-        try:
-            address = 'ajax/verkaufajax.php?do=decline&id={}&token={}'.format(wimp_id, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['action']
-        except:
-            pass
+        address = 'ajax/verkaufajax.php?do=decline&id={}&token={}'.format(wimp_id, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['action']
 
     # Shops
     def __parse_npc_prices_from_html(self, html_data):
@@ -830,22 +713,16 @@ class HTTPConnection(object):
                                'produkt[0]': productId,
                                'anzahl[0]': amount
                                })
-        try:
-            header = {'Content-Type': 'application/x-www-form-urlencoded'}
-            response, content = self.__send_request('stadt/shop.php?s={}'.format(shop), 'POST', parameter, header)
-            self.__check_http_ok(response)
-        except:
-            raise
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        response, content = self.__send_request('stadt/shop.php?s={}'.format(shop), 'POST', parameter, header)
+        self.__check_http_ok(response)
 
     def buy_from_aqua_shop(self, productId: int, amount: int = 1):
         adresse = 'ajax/ajax.php?products={}:{}&do=shopBuyProducts&type=aqua&token={}'\
                   .format(productId, amount, self.__token)
 
-        try:
-            response, content = self.__send_request(f'{adresse}')
-            self.__check_http_ok(response)
-        except:
-            return ''
+        response, content = self.__send_request(f'{adresse}')
+        self.__check_http_ok(response)
 
     # marketplace
     def get_offers_from_product(self, prod_id):
@@ -855,65 +732,57 @@ class HTTPConnection(object):
         listOffers = []
         while nextPage:
             nextPage = False
+            address = 'stadt/markt.php?order=p&v={}&filter=1&page={}'.format(str(prod_id), str(iPage))
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
 
-            try:
-                address = 'stadt/markt.php?order=p&v={}&filter=1&page={}'.format(str(prod_id), str(iPage))
-                response, content = self.__send_request(address)
-                self.__check_http_ok(response)
-            except:
-                pass  # TODO: exception definieren
+            html_file = io.BytesIO(content)
+            html_tree = html.parse(html_file)
+            root = html_tree.getroot()
+            table = root.findall('./body/div/table/*')
+
+            if table[1][0].text == 'Keine Angebote':
+                pass
             else:
-                html_file = io.BytesIO(content)
-                html_tree = html.parse(html_file)
-                root = html_tree.getroot()
-                table = root.findall('./body/div/table/*')
+                # range von 1 bis länge-1, da erste Zeile Überschriften sind und die letzte Weiter/Zurück.
+                # Falls es mehrere seiten gibt.
+                for i in range(1, len(table) - 1):
+                    anzahl = table[i][0].text
+                    anzahl = anzahl.replace('.', '')
 
-                if table[1][0].text == 'Keine Angebote':
-                    pass
-                else:
-                    # range von 1 bis länge-1, da erste Zeile Überschriften sind und die letzte Weiter/Zurück.
-                    # Falls es mehrere seiten gibt.
-                    for i in range(1, len(table) - 1):
-                        anzahl = table[i][0].text
-                        anzahl = anzahl.replace('.', '')
+                    preis = table[i][3].text
+                    preis = preis.replace('wT', '')
+                    preis = preis.replace('.', '')
+                    preis = preis.replace(',', '.')
+                    # produkt = table[i][1][0].text
+                    # verkaeufer = table[i][2][0].text
 
-                        preis = table[i][3].text
-                        preis = preis.replace('wT', '')
-                        preis = preis.replace('.', '')
-                        preis = preis.replace(',', '.')
-                        # produkt = table[i][1][0].text
-                        # verkaeufer = table[i][2][0].text
+                    listOffers.append([int(anzahl), float(preis)])
 
-                        listOffers.append([int(anzahl), float(preis)])
-
-                    for element in table[len(table) - 1][0]:
-                        if 'weiter' in element.text:
-                            nextPage = True
-                            iPage = iPage + 1
+                for element in table[len(table) - 1][0]:
+                    if 'weiter' in element.text:
+                        nextPage = True
+                        iPage = iPage + 1
 
         return listOffers
 
     def get_cheapest_offers_for(self, product):
         """ returns only the first page of offers for a certain product from the marketplace """
         list_offers = []
+        address = 'stadt/markt.php?order=p&v={}&filter=1&page={}'.format(str(product.id), 1)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
 
-        try:
-            address = 'stadt/markt.php?order=p&v={}&filter=1&page={}'.format(str(product.id), 1)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-        except:
-            pass  # TODO: exception definieren
-        else:
-            matches = re.findall(r'buy\((.*?)\)', str(content))
-            for match in matches:
-                attributes = match.replace("\\'", "").split(',')
-                list_offers.append({
-                    'id': attributes[0],
-                    'amount': int(attributes[1]),
-                    'price_verbose': "{},{}".format(attributes[2], attributes[3]),
-                    'price': float(attributes[-2]),
-                    'product_name': attributes[-1]
-                })
+        matches = re.findall(r'buy\((.*?)\)', str(content))
+        for match in matches:
+            attributes = match.replace("\\'", "").split(',')
+            list_offers.append({
+                'id': attributes[0],
+                'amount': int(attributes[1]),
+                'price_verbose': "{},{}".format(attributes[2], attributes[3]),
+                'price': float(attributes[-2]),
+                'product_name': attributes[-1]
+            })
 
         return list_offers
 
@@ -955,81 +824,60 @@ class HTTPConnection(object):
         """
         @param day: string (day of daily bonus)
         """
-        try:
-            address = 'ajax/ajax.php?do=dailyloginbonus_getreward&day={}&token={}'.format(day, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            return self.__generate_json_and_check_ok(content)
-        except:
-            pass
+        address = 'ajax/ajax.php?do=dailyloginbonus_getreward&day={}&token={}'.format(day, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        return self.__generate_json_and_check_ok(content)
 
     def get_big_quest_data(self, year_id):
         """Returns Data from Yearly Series of Quests"""
-        try:
-            # id = 3 is 2022, id = 4 is 2023
-            address = 'ajax/ajax.php?do=bigquest_init&id={}&token={}'.format(year_id, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['data']
-        except:
-            pass
+        # id = 3 is 2022, id = 4 is 2023
+        address = 'ajax/ajax.php?do=bigquest_init&id={}&token={}'.format(year_id, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['data']
 
     def send_big_quest_data(self, year_id, quest_id, product, quantity):
         """Returns Data from Yearly Series of Quests"""
-        try:
-            # id = 3 is 2022, id = 4 is 2023
-            address = 'ajax/ajax.php?do=bigquest_entry&id={}&questid={}&pid={}&amount={}&token={}'\
-                .format(year_id, quest_id, product.id, quantity, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['data']
-        except:
-            pass
+        # id = 3 is 2022, id = 4 is 2023
+        address = 'ajax/ajax.php?do=bigquest_entry&id={}&questid={}&pid={}&amount={}&token={}' \
+            .format(year_id, quest_id, product.id, quantity, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['data']
 
     def init_infinity_quest(self):
         headers = self.__get_header()
         server = self.__get_url()
         adresse = '{}ajax/ajax.php?do=infinite_quest_get&token={}'.format(server, self.__token)
-        try:
-            response, content = self.__webclient.request(adresse, 'GET', headers=headers)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent
-        except:
-            pass
+        response, content = self.__webclient.request(adresse, 'GET', headers=headers)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent
 
     def send_infinity_quest(self, questnr, product, amount):
-        try:
-            address = 'ajax/ajax.php?do=infinite_quest_entry&pid={}' \
-                      '&amount={}&questnr={}&token={}'.format(product, amount, questnr, self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent
-        except:
-            pass
+        address = 'ajax/ajax.php?do=infinite_quest_entry&pid={}' \
+                  '&amount={}&questnr={}&token={}'.format(product, amount, questnr, self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent
 
     def get_city_quest(self):
-        try:
-            address = 'ajax/ajax.php?do=CityQuest&action=getQuest&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['data']
-        except:
-            pass
+        address = 'ajax/ajax.php?do=CityQuest&action=getQuest&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['data']
 
     def send_city_quest(self):
-        try:
-            address = 'ajax/ajax.php?do=CityQuest&action=send&token={}'.format(self.__token)
-            response, content = self.__send_request(address)
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['data']
-        except:
-            pass
+        address = 'ajax/ajax.php?do=CityQuest&action=send&token={}'.format(self.__token)
+        response, content = self.__send_request(address)
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['data']
 
     def __get_honey_quest(self, jContent):
         """Sucht im JSON Content nach verfügbaren Bienenquesten und gibt diese zurück."""
@@ -1056,12 +904,9 @@ class HTTPConnection(object):
     #######################
     def create_new_message_and_return_result(self):
         """Erstellt eine neue Nachricht und gibt deren ID zurück, die für das Senden benötigt wird."""
-        try:
-            response, content = self.__send_request('nachrichten/new.php')
-            self.__check_http_ok(response)
-            return content
-        except:
-            raise
+        response, content = self.__send_request('nachrichten/new.php')
+        self.__check_http_ok(response)
+        return content
 
     def send_message_and_return_result(self, msg_id, msg_to, msg_subject, msg_body):
         """Verschickt eine Nachricht mit den übergebenen Parametern."""
@@ -1069,71 +914,55 @@ class HTTPConnection(object):
                                'msg_to': msg_to,
                                'msg_subject': msg_subject,
                                'msg_body': msg_body,
-                               'msg_send': 'senden'}) 
-        try:
-            response, content = self.__send_request('nachrichten/new.php', 'POST', parameter)
-            self.__check_http_ok(response)
-            return content
-        except:
-            raise
+                               'msg_send': 'senden'})
+        response, content = self.__send_request('nachrichten/new.php', 'POST', parameter)
+        self.__check_http_ok(response)
+        return content
 
     def get_note(self):
         """Get the users note"""
-        try:
-            response, content = self.__send_request('notiz.php', 'POST')
-            self.__check_http_ok(response)
-            content = content.decode('UTF-8')
-            my_parser = etree.HTMLParser(recover=True)
-            html_tree = etree.fromstring(content, parser=my_parser)
+        response, content = self.__send_request('notiz.php', 'POST')
+        self.__check_http_ok(response)
+        content = content.decode('UTF-8')
+        my_parser = etree.HTMLParser(recover=True)
+        html_tree = etree.fromstring(content, parser=my_parser)
 
-            note = html_tree.find('./body/form/div/textarea[@id="notiztext"]')
-            noteText = note.text
-            if noteText is None:
-                return ''
-            return noteText.strip()
-        except:
-            raise
+        note = html_tree.find('./body/form/div/textarea[@id="notiztext"]')
+        noteText = note.text
+        if noteText is None:
+            return ''
+        return noteText.strip()
 
     ########################
     # Products and Storage #
     ########################
     def get_all_product_informations(self):
         """Sammelt alle Produktinformationen und gibt diese zur Weiterverarbeitung zurück."""
-        try:
-            response, content = self.__send_request('main.php?page=garden')
-            content = content.decode('UTF-8')
-            self.__check_http_ok(response)
-            reToken = re.search(r'ajax\.setToken\(\"(.*)\"\);', content)
-            self.__token = reToken.group(1) #TODO: except, wenn token nicht aktualisiert werden kann
-            reProducts = re.search(r'data_products = ({.*}});var', content)
-            return reProducts.group(1)
-        except:
-            raise
+        response, content = self.__send_request('main.php?page=garden')
+        content = content.decode('UTF-8')
+        self.__check_http_ok(response)
+        reToken = re.search(r'ajax\.setToken\(\"(.*)\"\);', content)
+        self.__token = reToken.group(1)
+        reProducts = re.search(r'data_products = ({.*}});var', content)
+        return reProducts.group(1)
 
     def get_inventory(self):
         """Ermittelt den Lagerbestand und gibt diesen zurück."""
-        try:
-            address = 'ajax/updatelager.php?all=1&sort=1&type=honey&token={}'.format(self.__token)
-            response, content = self.__send_request(address, 'POST')
-            self.__check_http_ok(response)
-            jContent = self.__generate_json_and_check_ok(content)
-            return jContent['produkte']
-        except:
-            pass
+        address = 'ajax/updatelager.php?all=1&sort=1&type=honey&token={}'.format(self.__token)
+        response, content = self.__send_request(address, 'POST')
+        self.__check_http_ok(response)
+        jContent = self.__generate_json_and_check_ok(content)
+        return jContent['produkte']
 
     def get_all_tradeable_products_from_overview(self):
         """Gibt eine Liste zurück, welche Produkte handelbar sind."""
-        try:
-            response, content = self.__send_request('stadt/markt.php?show=overview')
-            self.__check_http_ok(response)
-            tradeableProducts = re.findall(r'markt\.php\?order=p&v=([0-9]{1,3})&filter=1', str(content))
-        except:
-            pass  # TODO: exception definieren
-        else:
-            for i in range(0, len(tradeableProducts)):
-                tradeableProducts[i] = int(tradeableProducts[i])
-                
-            return tradeableProducts
+        response, content = self.__send_request('stadt/markt.php?show=overview')
+        self.__check_http_ok(response)
+        tradeableProducts = re.findall(r'markt\.php\?order=p&v=([0-9]{1,3})&filter=1', str(content))
+        for i in range(0, len(tradeableProducts)):
+            tradeableProducts[i] = int(tradeableProducts[i])
+
+        return tradeableProducts
 
 
 class HTTPStateError(Exception):

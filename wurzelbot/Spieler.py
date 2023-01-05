@@ -98,12 +98,8 @@ class Spieler:
         """
         Liest vom Server, ob die E-Mail Adresse bestätigt ist und speichert den Status in der KLasse.
         """
-        try:
-            tmpEMailConf = http.check_if_email_address_is_confirmed()
-        except:
-            pass
-        else:
-            self.__eMailAdressConfirmed = tmpEMailConf
+        tmpEMailConf = http.check_if_email_address_is_confirmed()
+        self.__eMailAdressConfirmed = tmpEMailConf
             
 
 spieler = Spieler()

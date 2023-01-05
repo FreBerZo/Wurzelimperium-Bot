@@ -232,27 +232,20 @@ class AquaGarden(Garden):
         """
         Alle Pflanzen im Wassergarten werden bewässert.
         """
-        try:
-            plants = http_connection.get_plants_to_water_in_aqua_garden()
-            nPlants = len(plants['fieldID'])
-            for i in range(0, nPlants):
-                sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i], plants['sy'][i])
-                http_connection.water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
-        except:
-            logging.error('Wassergarten konnte nicht bewässert werden.')
-        else:
-            logging.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
+        plants = http_connection.get_plants_to_water_in_aqua_garden()
+        nPlants = len(plants['fieldID'])
+        for i in range(0, nPlants):
+            sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i],
+                                                                     plants['sy'][i])
+            http_connection.water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
+
+        logging.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
         
     def harvest(self):
         """
         Erntet alles im Wassergarten.
         """
-        try:
-            http_connection.harvest_aqua_garden()
-        except:
-            raise
-        else:
-            pass
+        http_connection.harvest_aqua_garden()
 
 
 class GardenManager:
