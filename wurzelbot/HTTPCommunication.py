@@ -290,6 +290,17 @@ class HTTPConnection(object):
         else:
             return jContent
 
+    def get_garden_info(self):
+        try:
+            address = '/ajax/ajax.php?do=citymap_init&token={}'.format(self.__token)
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content.decode('UTF-8'))
+        except:
+            raise
+        else:
+            return jContent['data']
+
     def read_user_data_from_server(self):
         """Ruft eine Updatefunktion im Spiel auf und verarbeitet die empfangenen userdaten."""
         try:
@@ -952,10 +963,24 @@ class HTTPConnection(object):
         except:
             pass
 
-    def get_big_quest_data(self):
+    def get_big_quest_data(self, year_id):
         """Returns Data from Yearly Series of Quests"""
         try:
-            address = 'ajax/ajax.php?do=bigquest_init&id=3&token={}'.format(self.__token)
+            # id = 3 is 2022, id = 4 is 2023
+            address = 'ajax/ajax.php?do=bigquest_init&id={}&token={}'.format(year_id, self.__token)
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            return jContent['data']
+        except:
+            pass
+
+    def send_big_quest_data(self, year_id, quest_id, product, quantity):
+        """Returns Data from Yearly Series of Quests"""
+        try:
+            # id = 3 is 2022, id = 4 is 2023
+            address = 'ajax/ajax.php?do=bigquest_entry&id={}&questid={}&pid={}&amount={}&token={}'\
+                .format(year_id, quest_id, product.id, quantity, self.__token)
             response, content = self.__send_request(address)
             self.__check_http_ok(response)
             jContent = self.__generate_json_and_check_ok(content)
@@ -983,6 +1008,26 @@ class HTTPConnection(object):
             self.__check_http_ok(response)
             jContent = self.__generate_json_and_check_ok(content)
             return jContent
+        except:
+            pass
+
+    def get_city_quest(self):
+        try:
+            address = 'ajax/ajax.php?do=CityQuest&action=getQuest&token={}'.format(self.__token)
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            return jContent['data']
+        except:
+            pass
+
+    def send_city_quest(self):
+        try:
+            address = 'ajax/ajax.php?do=CityQuest&action=send&token={}'.format(self.__token)
+            response, content = self.__send_request(address)
+            self.__check_http_ok(response)
+            jContent = self.__generate_json_and_check_ok(content)
+            return jContent['data']
         except:
             pass
 

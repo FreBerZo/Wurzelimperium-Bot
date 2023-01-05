@@ -9,10 +9,12 @@ from wurzelbot.reservation import reservation_manager, Reservator, Resource
 
 from .abstract_objectives import SubObjective
 
-
-# TODO: add work required function, if only waiting is required because objective is nearly reached - get_work_reservation can be exploited for that
+# TODO: implement parallel sub objectives and main objectives work
+# TODO: add work required function, if only waiting is required because objective is nearly reached
+#  get_work_reservation can be exploited for that
 # multiple sub objectives from the same class does not work until now. Because of the reach function that tracks the
 # global resource reach and not reach of just the sub objective
+
 
 class FarmMoney(SubObjective):
     """
@@ -83,6 +85,9 @@ class FarmMoney(SubObjective):
                 if reserved_money_quantity > 0:
                     buy_quantity = len(garden_manager.get_empty_tiles()) - storage.get_stock_from_product(self.plant)
                     trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
+                else:
+                    # this doesn't need reservation as it uses the min money amount to buy the most profitable plant
+                    trader.buy_cheapest_of(self.plant, 4, round(spieler.money / 2, 2))
 
         self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.plant)
         if self.prev_plant is not None:
@@ -162,7 +167,7 @@ class FarmPlant(SubObjective):
         return self.usable_plant_quantity != 0
 
     def is_reached(self):
-        return gardener.get_potential_quantity_of(self.plant) >= self.reach_quantity()
+        return self.usable_plant_quantity >= self.reach_quantity()
 
     def finish(self):
         reservation_manager.free_reservation(self, Resource.PLANT, self.plant)
@@ -170,7 +175,6 @@ class FarmPlant(SubObjective):
         return True
 
     def get_work_reservations(self):
-        # TODO: put this part in another method
         missing_amount = self.reach_quantity() - gardener.get_potential_quantity_of(self.plant)
         if missing_amount <= 0:
             self.usable_tile_quantity = 0
