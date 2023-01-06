@@ -77,7 +77,7 @@ class HTTPConnection(object):
         if j_content['success'] == 1:
             return j_content
         else:
-            raise JSONError()
+            raise JSONError('could not generate json')
 
     def __generate_json_and_check_ok(self, content: str):
         """Aufbereitung und Prüfung der vom Server empfangenen JSON Daten."""
@@ -946,13 +946,13 @@ class HTTPConnection(object):
         reProducts = re.search(r'data_products = ({.*}});var', content)
         return reProducts.group(1)
 
-    def get_inventory(self):
+    def get_inventory(self, shelf_type):
         """Ermittelt den Lagerbestand und gibt diesen zurück."""
-        address = 'ajax/updatelager.php?all=1&sort=1&type=honey&token={}'.format(self.__token)
+        address = 'ajax/updatelager.php?all=1&sort=1&type={}&token={}'.format(shelf_type, self.__token)
         response, content = self.__send_request(address, 'POST')
         self.__check_http_ok(response)
         jContent = self.__generate_json_and_check_ok(content)
-        return jContent['produkte']
+        return jContent
 
     def get_all_tradeable_products_from_overview(self):
         """Gibt eine Liste zurück, welche Produkte handelbar sind."""
@@ -963,6 +963,29 @@ class HTTPConnection(object):
             tradeableProducts[i] = int(tradeableProducts[i])
 
         return tradeableProducts
+
+    def create_contract(self, player_name, product_data):
+        parameter_dict = {'contract_to': player_name,
+                          'confirm_contract': 'versenden'}
+        for i, item in enumerate(product_data.items()):
+            parameter_dict[f'prod[{i}]'] = str(item[0].id)
+            parameter_dict[f'anz[{i}]'] = item[1]['quantity']
+            parameter_dict[f'preis[{i}]'] = item[1]['price']
+
+        parameter = urlencode(parameter_dict)
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+        response, content = self.__send_request('vertraege/new.php', 'POST', parameter, header)
+        self.__check_http_ok(response)
+
+    def cancel_all_contracts(self):
+        response, content = self.__send_request('vertraege/overview.php')
+        anull_numbers = re.findall(r'onclick="anull\(\\\'(.*?)\\\'\);"', str(content))
+        header = {'Content-Type': 'application/x-www-form-urlencoded'}
+
+        for anull_number in anull_numbers:
+            parameter = urlencode({'anull_nr': anull_number})
+            response, content = self.__send_request('vertraege/overview.php', 'POST', parameter, header)
+            self.__check_http_ok(response)
 
 
 class HTTPStateError(Exception):

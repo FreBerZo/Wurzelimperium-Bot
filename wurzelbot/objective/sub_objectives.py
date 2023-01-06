@@ -81,8 +81,10 @@ class FarmMoney(SubObjective):
             self.fallback_plant = gardener.get_potential_plants()[-1]
 
         if storage.get_stock_from_product(self.plant) < len(garden_manager.get_empty_tiles()):
+            # TODO: replace this with provide plant and implement money priority in provide plant
             with Reservator(self, Resource.MONEY, -1) as reserved_money_quantity:
                 if reserved_money_quantity > 0:
+                    reserved_money_quantity += round(trader.min_money() / 2, 2)
                     buy_quantity = len(garden_manager.get_empty_tiles()) - storage.get_stock_from_product(self.plant)
                     trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
                 else:
@@ -154,12 +156,12 @@ class FarmPlant(SubObjective):
         self.usable_tile_quantity = 0
         self.missing_amount = 0
 
-        if storage.get_stock_from_product(self.plant) == 0:
+        if storage.get_potential_stock_from_product(self.plant) == 0:
             self.sub_objectives.append(ProvidePlant(self.priority, self.plant))
 
     def reach_quantity(self):
         if self.consider_min_quantity:
-            return storage.get_box_for_product(self.plant).min_quantity() + self.quantity
+            return self.plant.min_quantity() + self.quantity
         return self.quantity
 
     def get_reservations(self):
@@ -202,7 +204,7 @@ class ProvidePlant(SubObjective):
         self.sub_objectives.append(FarmMoney(self.priority, self.product.price_npc * self.quantity, False))
 
     def is_reached(self):
-        return spieler.money - trader.min_money >= self.product.price_npc * self.quantity
+        return spieler.money - trader.min_money() >= self.product.price_npc * self.quantity
 
     def get_finish_reservations(self):
         self.usable_money_quantity = reservation_manager.reserve(self, Resource.MONEY,
@@ -211,7 +213,7 @@ class ProvidePlant(SubObjective):
 
     def finish(self):
         trader.buy_cheapest_of(self.product, self.quantity, self.usable_money_quantity)
-        reservation_manager.free_money(self)
+        reservation_manager.free_reservation(self, Resource.MONEY)
         return True
 
     def work(self):

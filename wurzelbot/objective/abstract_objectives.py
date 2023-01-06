@@ -28,6 +28,8 @@ class Objective(metaclass=abc.ABCMeta):
     def work(self):
         pass
 
+    # TODO: IDEA: sub objectives can be created at any point and will be worked before super objective can work
+    # TODO: IDEA: differentiate between prerequisite sub objective and parallel executed sub objectives
     def work_if_possible(self):
         # if there are sub objectives, they need to be reached first before this objective can continue
         if len(self.sub_objectives) > 0:

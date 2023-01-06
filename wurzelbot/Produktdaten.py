@@ -12,7 +12,7 @@ from wurzelbot.trading import Shop
 from enum import Enum
 
 
-class Category(Enum):
+class ProductType(Enum):
     DECORATION = 'd'
     HERBS = 'h'
     HONEY = 'honey'
@@ -26,11 +26,11 @@ class Category(Enum):
 
 
 class Product:
-    def __init__(self, id, cat, sx, sy, name, lvl, crop, plantable, time):
+    def __init__(self, id, product_type, sx, sy, name, lvl, crop, plantable, time):
         self.id = id
-        if cat == '':
-            cat = 'c'
-        self.category = Category(cat)
+        if product_type == '':
+            product_type = 'c'
+        self.product_type = ProductType(product_type)
         self.size = (sx, sy)
         self.name = name.decode('UTF-8')
         self.level = lvl
@@ -46,17 +46,23 @@ class Product:
         return self.name
 
     def is_plant(self):
-        return self.category == Category.VEGETABLES
+        return self.product_type == ProductType.VEGETABLES
 
     def is_decoration(self):
-        return self.category == Category.DECORATION
+        return self.product_type == ProductType.DECORATION
+
+    def min_quantity(self):
+        if self.is_plant():
+            from wurzelbot.Garten import garden_manager
+            return int(garden_manager.get_num_of_plantable_tiles() / (self.size[0] * self.size[1]))
+        return 0
 
     def print_all(self):
         # Show nothing instead of None
         xstr = lambda s: s or ""
 
         print('ID:', str(self.id).rjust(3), ' ',
-              'CAT:', str(self.category.name).ljust(5), ' ',
+              'CAT:', str(self.product_type.name).ljust(5), ' ',
               'Name:', str(self.name).ljust(35), ' ',
               'Plantable:', str(self.is_plantable).ljust(5), ' ',
               'NPC:', str(xstr(self.price_npc)).rjust(6), ' ',
@@ -129,7 +135,7 @@ class ProductData:
 
             name = products[key]['name'].replace('&nbsp;', ' ')
             self.__products.append(Product(id=int(key),
-                                           cat=products[key]['category'],
+                                           product_type=products[key]['category'],
                                            sx=products[key]['sx'],
                                            sy=products[key]['sy'],
                                            name=name.encode('utf-8'),

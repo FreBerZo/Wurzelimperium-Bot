@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-import math
 import datetime
 
 from wurzelbot.HTTPCommunication import http_connection
@@ -134,11 +133,29 @@ class Trader:
             return gaps
 
     def buy_cheapest_of(self, product, quantity, money=None):
-        # TODO: what if shelf is full?
         if money is None:
             money = spieler.money - self.min_money()
         if money <= 0:
             return 0
+
+        shelf_type = storage.get_shelf_type_by_product_type(product.product_type)
+        if storage.is_full(shelf_type):
+            # This works because it is possible to overfill the storage by creating and cancelling contracts.
+            # Normally players can't plant plants that can not be shown in storage, if overfilled because of a
+            # UI problem, but the bot doesn't care. Therefor overfilling the storage is not a problem.
+            trade_products = {}
+            products = storage.get_products(shelf_type, product.product_type)
+            for product in products:
+                if product.is_tradable:
+                    price = product.price_npc
+                    if price is None:
+                        price = self.get_sell_price_for(product)
+                    trade_products[product] = {'quantity': storage.get_stock_from_product(product), 'price': price}
+                    shelf = storage.get_shelf(shelf_type)
+                    if len(trade_products) > len(shelf.get_products()) - (shelf.slots_per_page * shelf.num_pages):
+                        break
+            http_connection.create_contract(spieler.user_name, trade_products)
+
         offers = http_connection.get_cheapest_offers_for(product)
         rest_quantity = quantity
         for offer in offers:
@@ -170,17 +187,25 @@ class Trader:
 
         bought_quantity = quantity - rest_quantity
 
+        http_connection.cancel_all_contracts()
+
         logging.info('bought {} {}'.format(bought_quantity, product))
 
         spieler.load_user_data()
+        storage.load_storage()
+        storage.use_product(product)
 
         return bought_quantity
 
     def sell_to_marketplace(self, product, quantity, price):
         price = round(price, 2)
         http_connection.sell_to_marketplace(product, quantity, price)
+
         logging.info("Sold {} {} for {}.".format(quantity, product, price))
+
         spieler.load_user_data()
+        storage.load_storage()
+        storage.use_product(product)
 
     def sell(self, product, sell_amount=-1):
         real_stock = storage.get_stock_from_product(product)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Produktdaten import product_data, Category
+from wurzelbot.Produktdaten import product_data
 from wurzelbot.Spieler import spieler
 from wurzelbot.Lager import storage, Box
 import logging

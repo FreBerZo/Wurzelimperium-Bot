@@ -1,9 +1,8 @@
 from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Lager import storage
-from wurzelbot.Produktdaten import Category
+from wurzelbot.Lager import storage, Box, ShelfType
 from wurzelbot.Garten import garden_manager, PlantCrop
 from wurzelbot.Spieler import spieler
-from wurzelbot.Lager import Box
+from wurzelbot.Produktdaten import ProductType
 import logging
 
 
@@ -18,7 +17,7 @@ class Gardener:
     def get_potential_plants(self):
         """Returns all owned seeds ordered by the quantity in storage and potential seeds after harvesting"""
         boxes = []
-        for box in storage.get_boxes_from_category(Category.VEGETABLES):
+        for box in storage.get_boxes(ShelfType.NORMAL, ProductType.VEGETABLES):
             boxes.append(Box(box.product, box.quantity))
         for storage_box in boxes:
             for planted_box in garden_manager.get_num_of_planted_plants():
@@ -57,8 +56,9 @@ class Gardener:
 
         logging.info("{} wurde {} mal gepflanzt.".format(product.name, planted))
 
-        storage.update_storage()
+        storage.load_storage()
         garden_manager.update_all()
+        storage.use_product(product)
         return planted
 
     def harvest(self):
@@ -69,7 +69,7 @@ class Gardener:
         if spieler.is_aqua_garden_available():
             garden_manager.aqua_garden.harvest()
 
-        storage.update_storage()
+        storage.load_storage()
         garden_manager.update_all()
 
     def water(self):
@@ -80,7 +80,7 @@ class Gardener:
         if spieler.is_aqua_garden_available():
             garden_manager.aqua_garden.water_plants()
 
-        storage.update_storage()
+        storage.load_storage()
         garden_manager.update_all()
 
     def remove_crop(self, crop):

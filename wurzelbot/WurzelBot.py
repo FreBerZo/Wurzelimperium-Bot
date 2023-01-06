@@ -12,7 +12,7 @@ from wurzelbot.Messenger import messenger
 from wurzelbot.Garten import garden_manager
 from wurzelbot.gardener import gardener
 from wurzelbot.Lager import storage
-from wurzelbot.Produktdaten import product_data, Category
+from wurzelbot.Produktdaten import product_data
 from wurzelbot.collector import collector
 from wurzelbot.Marktplatz import trader
 from wurzelbot.objective import objective_manager
@@ -55,7 +55,7 @@ class WurzelBot(object):
         garden_manager.init_gardens()
 
         spieler.accountLogin = loginDaten
-        storage.update_storage()
+        storage.load_storage(efficient_load=False)
         trader.load_wimp_data()
 
     def exitBot(self):
