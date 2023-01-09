@@ -105,7 +105,6 @@ class Shelf:
     def load_shelf(self, data=None):
         if data is None:
             data = http_connection.get_inventory(self.shelf_type.value)
-        else:
             self.num_pages = int(data['regalzahl'])
             self.max_pages = int(data['maxRegale'])
 

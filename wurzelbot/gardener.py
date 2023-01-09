@@ -3,6 +3,7 @@ from wurzelbot.Lager import storage, Box, ShelfType
 from wurzelbot.Garten import garden_manager, PlantCrop
 from wurzelbot.Spieler import spieler
 from wurzelbot.Produktdaten import ProductType
+from wurzelbot.Marktplatz import trader
 import logging
 
 
@@ -63,12 +64,17 @@ class Gardener:
 
     def harvest(self):
         logging.info("Alle Pflanzen werden geerntet")
+
         for garden in garden_manager.gardens:
-            garden.harvest()
+            harvestable_products = garden.get_harvestable_products()
+            if len(harvestable_products) > 0:
+                trader.make_space_in_storage_for_products(harvestable_products)
+                garden.harvest()
 
         if spieler.is_aqua_garden_available():
             garden_manager.aqua_garden.harvest()
 
+        http_connection.cancel_all_contracts()
         storage.load_storage()
         garden_manager.update_all()
 

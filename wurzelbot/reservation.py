@@ -29,6 +29,7 @@ class Reservation:
 
 
 # TODO: IDEA: add difference between requested quantity and received quantity
+# TODO: IDEA: add difference between shared reservation and normal reservation
 
 class ReservationManager:
     def __init__(self):

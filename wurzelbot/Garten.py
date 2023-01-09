@@ -180,6 +180,11 @@ class Garden:
         return list(set([crop.get_first_tile() for crop in self.get_crops_from_class(PlantCrop)
                          if not crop.is_watered()]))
 
+    def get_harvestable_products(self):
+        current_time = time.time()
+        return list(set([crop.product for crop in self.get_crops_from_class(PlantCrop)
+                         if crop.harvest_time < current_time]))
+
     def get_empty_tiles(self):
         return [tile for tile in self.garden_field.get_tiles_flat() if tile.is_empty()]
 

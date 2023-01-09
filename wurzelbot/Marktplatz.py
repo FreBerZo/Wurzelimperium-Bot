@@ -5,7 +5,6 @@ import datetime
 
 from wurzelbot.HTTPCommunication import http_connection
 from wurzelbot.Garten import garden_manager
-from wurzelbot.gardener import gardener
 from wurzelbot.Produktdaten import product_data
 from wurzelbot.Spieler import spieler
 from wurzelbot.Lager import storage
@@ -132,29 +131,50 @@ class Trader:
             
             return gaps
 
+    def make_space_in_storage_for_products(self, products):
+        """
+        Makes a contract to temporarily move products out of the storage so all products stated in the products
+        attribute can be added to the storage. Don't forget to cancel all contracts after adding the desired products.
+        """
+        if len(products) == 0:
+            return
+        product_type = products[0].product_type
+        shelf_type = storage.get_shelf_type_by_product_type(product_type)
+        shelf = storage.get_shelf(shelf_type)
+
+        # This works because it is possible to overfill the storage by creating and cancelling contracts.
+        # Normally players can't plant plants that can not be shown in storage, if overfilled because of a
+        # UI problem, but the bot doesn't care. Therefor overfilling the storage is not a problem.
+        products_in_shelf = storage.get_products(shelf_type)
+        tradable_products_in_shelf = [product for product in storage.get_products(shelf_type, product_type)
+                                      if product.is_tradable]
+        removable_products = list(set(tradable_products_in_shelf) - set(products))
+        max_space = shelf.num_pages * shelf.slots_per_page
+        products_to_be_in_shelf = list(products_in_shelf)
+        products_to_be_in_shelf.extend(products)
+        num_of_products_to_be_in_shelf = len(list(set(products_to_be_in_shelf)))
+        num_of_products_to_be_removed = num_of_products_to_be_in_shelf - max_space
+        if num_of_products_to_be_removed <= 0:
+            return
+        if num_of_products_to_be_removed > len(removable_products):
+            raise RuntimeError('Too many not tradable products are in the storage.')
+        selected_products = removable_products[:num_of_products_to_be_removed]
+
+        trade_products = {}
+        for product in selected_products:
+            price = product.price_npc
+            if price is None:
+                price = self.get_sell_price_for(product)
+            trade_products[product] = {'quantity': storage.get_stock_from_product(product), 'price': price}
+        http_connection.create_contract(spieler.user_name, trade_products)
+
     def buy_cheapest_of(self, product, quantity, money=None):
         if money is None:
             money = spieler.money - self.min_money()
         if money <= 0:
             return 0
 
-        shelf_type = storage.get_shelf_type_by_product_type(product.product_type)
-        if storage.is_full(shelf_type):
-            # This works because it is possible to overfill the storage by creating and cancelling contracts.
-            # Normally players can't plant plants that can not be shown in storage, if overfilled because of a
-            # UI problem, but the bot doesn't care. Therefor overfilling the storage is not a problem.
-            trade_products = {}
-            products = storage.get_products(shelf_type, product.product_type)
-            for product in products:
-                if product.is_tradable:
-                    price = product.price_npc
-                    if price is None:
-                        price = self.get_sell_price_for(product)
-                    trade_products[product] = {'quantity': storage.get_stock_from_product(product), 'price': price}
-                    shelf = storage.get_shelf(shelf_type)
-                    if len(trade_products) > len(shelf.get_products()) - (shelf.slots_per_page * shelf.num_pages):
-                        break
-            http_connection.create_contract(spieler.user_name, trade_products)
+        self.make_space_in_storage_for_products([product])
 
         offers = http_connection.get_cheapest_offers_for(product)
         rest_quantity = quantity
@@ -212,7 +232,7 @@ class Trader:
         if real_stock == 0:
             return
 
-        potential_stock = gardener.get_potential_quantity_of(product)
+        potential_stock = storage.get_potential_stock_from_product(product)
         min_quantity = storage.get_box_for_product(product).min_quantity()
         potential_sell_amount = potential_stock - min_quantity
         if sell_amount == -1 or sell_amount > potential_sell_amount:

@@ -35,10 +35,11 @@ class ObjectiveManager:
         current_quest_id = int(big_quest_data['current'])
         current_quest_data = big_quest_data['data']['quests'][str(current_quest_id)]
         needed_products = current_quest_data['need']
-        sent_products = current_quest_data['have']
-        for product_id, quantity in needed_products.items():
-            if str(product_id) in sent_products.keys():
-                needed_products[str(product_id)] -= sent_products[str(product_id)]
+        sent_products = current_quest_data.get('have')
+        if sent_products is not None:
+            for product_id, quantity in needed_products.items():
+                if str(product_id) in sent_products.keys():
+                    needed_products[str(product_id)] -= sent_products[str(product_id)]
         # TODO: what if quest is finished?
         self.objectives.append(BigQuest(2, year_id, current_quest_id, needed_products))
 
