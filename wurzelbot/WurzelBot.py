@@ -5,6 +5,7 @@ Created on 21.03.2017
 
 @author: MrFlamez
 '''
+import sys
 
 from wurzelbot.Spieler import spieler, Login
 from wurzelbot.HTTPCommunication import http_connection
@@ -29,12 +30,15 @@ class WurzelBot(object):
         self.user_name = user_name
         self.password = password
         self.server = server
+        self.sleeping = False
+        self.terminating = False
 
     def launchBot(self):
         """
         Diese Methode startet und initialisiert den Wurzelbot. Dazu wird ein Login mit den
         übergebenen Logindaten durchgeführt und alles nötige initialisiert.
         """
+
         loginDaten = Login(server=self.server, user=self.user_name, password=self.password)
 
         http_connection.log_in(loginDaten)
@@ -64,8 +68,24 @@ class WurzelBot(object):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
-        http_connection.log_out()
-        logging.info('logout successfull')
+        if http_connection.logged_in:
+            http_connection.log_out()
+            logging.info('logout successfull')
+
+    def send_termination(self, *args):
+        if self.sleeping:
+            self.terminate()
+        self.terminating = True
+        logging.info("planned shutdown")
+
+    def check_termination(self):
+        if self.terminating:
+            self.terminate()
+
+    def terminate(self):
+        self.exitBot()
+        logging.info('shutting down wurzelbot')
+        sys.exit()
 
     def sleep_bot_until_next_action(self):
         sleep_time = garden_manager.get_earliest_required_action() - int(time.time())
@@ -73,23 +93,37 @@ class WurzelBot(object):
             return
         self.exitBot()
         logging.info("bot sleeps for " + str(datetime.timedelta(seconds=sleep_time)))
+        self.sleeping = True
         time.sleep(sleep_time)
+        self.sleeping = False
         self.launchBot()
 
     def run_objectives(self):
         while True:
+            self.check_termination()
+
             collector.collect_daily_login_bonus()
 
+            self.check_termination()
+
             gardener.harvest()
+
+            self.check_termination()
 
             objective_finished = True
             while objective_finished:
                 objective_manager.create_objectives()
+                self.check_termination()
                 objective_finished = objective_manager.run_objectives()
+                self.check_termination()
+
+            self.check_termination()
 
             gardener.water()
 
             # trader.reject_bad_wimp_offers()
+
+            self.check_termination()
 
             self.sleep_bot_until_next_action()
 

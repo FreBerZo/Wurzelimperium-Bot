@@ -32,6 +32,7 @@ class HTTPConnection(object):
         self.__cookie = None
         self.__unr = None
         self.__portunr = None
+        self.logged_in = False
 
     def __del__(self):
         self.__Session = None
@@ -208,6 +209,7 @@ class HTTPConnection(object):
         self.__Session.openSession(cookie['PHPSESSID'].value, str(loginDaten.server), SERVER_DOMAIN)
         self.__cookie = cookie
         self.__userID = cookie['wunr'].value
+        self.logged_in = True
 
     def log_out(self):
         """Logout des Spielers inkl. Löschen der Session."""
@@ -215,6 +217,7 @@ class HTTPConnection(object):
         self.__check_http_found(response)
         cookie = SimpleCookie(response['set-cookie'])
         self.__check_session_deleted(cookie)
+        self.logged_in = False
 
     # general info
     def __get_info_from_json_content(self, jContent, info):

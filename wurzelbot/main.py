@@ -8,8 +8,8 @@ Created on 21.03.2017
 from wurzelbot.WurzelBot import WurzelBot
 import sys
 import os
-import atexit
 import logging
+import signal
 
 
 def initWurzelBot(user_name, password, server):
@@ -30,11 +30,8 @@ def initWurzelBot(user_name, password, server):
     logging.info('booting wurzelbot')
     wurzel_bot = WurzelBot(user_name, password, server)
 
-    def exit_handler():
-        wurzel_bot.exitBot()
-        logging.info('shutting down wurzelbot')
-
-    atexit.register(exit_handler)
+    signal.signal(signal.SIGINT, wurzel_bot.send_termination)
+    signal.signal(signal.SIGTERM, wurzel_bot.send_termination)
     return wurzel_bot
 
 
