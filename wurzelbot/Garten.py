@@ -210,14 +210,12 @@ class Garden:
         """
         Ein Garten mit der gardenID wird komplett bewässert.
         """
-        logging.info('Gieße alle Pflanzen im Garten {}.'.format(self.garden_id))
-
         tiles = self.get_tiles_to_be_watered()
         for tile in tiles:
             tile_ids = [tile.tile_id for tile in tile.crop.tiles]
             http_connection.water_plant_in_garden(self.garden_id, tile.tile_id, tile_ids)
 
-        logging.info('Im Garten {} wurden {} Pflanzen gegossen.'.format(self.garden_id, len(tiles)))
+        logging.info('{} plants have been harvested in normal garden {}'.format(len(tiles), self.garden_id))
         self.update_garden()
 
     def harvest(self):
@@ -262,7 +260,6 @@ class GardenManager:
         """
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
-        logging.info("Gärten werden erstellt.")
         self.gardens = []
         tmp_number_of_gardens = spieler.number_of_gardens
         for i in range(1, tmp_number_of_gardens + 1):

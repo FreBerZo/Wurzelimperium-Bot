@@ -398,13 +398,6 @@ class HTTPConnection(object):
         self._change_garden(gardenID)
         address = 'ajax/ajax.php?do=gardenHarvestAll&token={}'.format(self.__token)
         response, content = self.__send_request(address)
-        jContent = json.loads(content)
-
-        if jContent['status'] == 'error':
-            logging.info(jContent['message'])
-        elif jContent['status'] == 'ok':
-            msg = jContent['harvestMsg'].replace('<div>', '').replace('</div>', '\n').replace('&nbsp;', ' ')
-            logging.info(msg.strip())
 
     def grow_plant(self, field, plant, gardenID, fields):
         """Baut eine Pflanze auf einem Feld an."""

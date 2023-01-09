@@ -33,6 +33,8 @@ class Gardener:
         if amount == 0:
             return 0
 
+        logging.info("planting {}...".format(product.name))
+
         product_stock = storage.get_stock_from_product(product)
         if amount < 0 or amount > product_stock:
             amount = product_stock
@@ -55,7 +57,7 @@ class Gardener:
                 if planted >= amount > 0:
                     break
 
-        logging.info("{} wurde {} mal gepflanzt.".format(product.name, planted))
+        logging.info("{} has been planted {} times".format(product.name, planted))
 
         storage.load_storage()
         garden_manager.update_all()
@@ -63,37 +65,50 @@ class Gardener:
         return planted
 
     def harvest(self):
-        logging.info("Alle Pflanzen werden geerntet")
+        logging.info("harvesting...")
+        harvested = False
 
         for garden in garden_manager.gardens:
             harvestable_products = garden.get_harvestable_products()
             if len(harvestable_products) > 0:
                 trader.make_space_in_storage_for_products(harvestable_products)
                 garden.harvest()
+                harvested = True
 
         if spieler.is_aqua_garden_available():
             garden_manager.aqua_garden.harvest()
+            harvested = True
 
-        http_connection.cancel_all_contracts()
-        storage.load_storage()
-        garden_manager.update_all()
+        if harvested:
+            http_connection.cancel_all_contracts()
+            storage.load_storage()
+            garden_manager.update_all()
+        else:
+            logging.info("nothing to harvest")
 
     def water(self):
-        logging.info("Alle Pflanzen werden gegossen.")
+        logging.info("watering...")
+        watered = False
+
         for garden in garden_manager.gardens:
-            garden.water_plants()
+            if len(garden.get_tiles_to_be_watered()) > 0:
+                garden.water_plants()
+                watered = True
 
         if spieler.is_aqua_garden_available():
             garden_manager.aqua_garden.water_plants()
 
-        storage.load_storage()
-        garden_manager.update_all()
+        if watered:
+            storage.load_storage()
+            garden_manager.update_all()
+        else:
+            logging.info("nothing to water")
 
     def remove_crop(self, crop):
         # it is assumed that a weed crop only occupies one tile
         tile = crop.tiles[0]
 
-        logging.info("Remove weed {} in garden {}".format(tile.tile_id, tile.garden.garden_id))
+        logging.info("remove weed {} in garden {}".format(tile.tile_id, tile.garden.garden_id))
 
         http_connection.remove_weed(tile.garden.garden_id, tile.tile_id)
 

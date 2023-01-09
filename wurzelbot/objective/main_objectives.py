@@ -16,6 +16,9 @@ class FarmMoneyMain(MainObjective):
         super().__init__(priority)
         self.sub_objectives.append(FarmMoney(self.priority, -1))
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority})"
+
     def is_reached(self):
         return True
 
@@ -27,6 +30,10 @@ class RemoveWeed(MainObjective):
         self.crop = crop
         self.usable_money_quantity = 0
         self.sub_objectives.append(FarmMoney(self.priority, self.crop.remove_cost))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority}, " \
+               f"crop=({self.crop.remove_cost}, {self.crop.tiles[0].tile_id}))"
 
     def is_reached(self):
         return True
@@ -52,6 +59,9 @@ class BigQuest(MainObjective):
             product = product_data.get_product_by_id(int(product_id))
             self.sub_objectives.append(FarmPlant(self.priority, product, quantity))
             reservation_manager.reserve(self, Resource.PLANT, quantity, product)
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority}, year={self.year_id+2019}, month={self.quest_id})"
 
     def is_reached(self):
         # the objective is always reached of the sub objectives finished

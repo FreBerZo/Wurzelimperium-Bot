@@ -38,7 +38,8 @@ class WurzelBot(object):
         loginDaten = Login(server=self.server, user=self.user_name, password=self.password)
 
         http_connection.log_in(loginDaten)
-        logging.info('Login erfolgreich.')
+        logging.debug('login successfull')
+        logging.debug('loading data...')
 
         spieler.load_user_data()
 
@@ -57,20 +58,21 @@ class WurzelBot(object):
         spieler.accountLogin = loginDaten
         storage.load_storage(efficient_load=False)
         trader.load_wimp_data()
+        logging.debug('loading successfull')
 
     def exitBot(self):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
         http_connection.log_out()
-        logging.info('Logout erfolgreich.')
+        logging.info('logout successfull')
 
     def sleep_bot_until_next_action(self):
         sleep_time = garden_manager.get_earliest_required_action() - int(time.time())
         if sleep_time <= 0:
             return
         self.exitBot()
-        logging.info("Bot schläft für " + str(datetime.timedelta(seconds=sleep_time)))
+        logging.info("bot sleeps for " + str(datetime.timedelta(seconds=sleep_time)))
         time.sleep(sleep_time)
         self.launchBot()
 

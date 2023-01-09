@@ -29,6 +29,7 @@ class Trader:
             self.wimp_data.update({garden.garden_id: http_connection.get_wimps_data(garden.garden_id)})
 
     def reject_bad_wimp_offers(self):
+        declined_wimps = 0
         for garden_id, offers in self.wimp_data.items():
             for wimp_id, data in offers.items():
                 offered_money = data[0]
@@ -40,7 +41,9 @@ class Trader:
                 # wimps seem to never offer the actual worth, but they give point for selling so 80% of the actual worth
                 # is enough for selling
                 if worth * 0.8 > offered_money:
+                    declined_wimps += 1
                     http_connection.decline_wimp(wimp_id)
+        logging.info(f"declined {declined_wimps} wimp(s)")
 
     # @cache(86400)
     def get_products_ordered_by_profitability(self):
@@ -166,6 +169,8 @@ class Trader:
             if price is None:
                 price = self.get_sell_price_for(product)
             trade_products[product] = {'quantity': storage.get_stock_from_product(product), 'price': price}
+        logging.debug("handling overfilled storage by moving {} products to a temporary contract"
+                     .format(len(trade_products)))
         http_connection.create_contract(spieler.user_name, trade_products)
 
     def buy_cheapest_of(self, product, quantity, money=None):
@@ -176,6 +181,7 @@ class Trader:
 
         self.make_space_in_storage_for_products([product])
 
+        buying_protocol = {}
         offers = http_connection.get_cheapest_offers_for(product)
         rest_quantity = quantity
         for offer in offers:
@@ -187,6 +193,10 @@ class Trader:
                     http_connection.buy_from_shop(product.buy_in_shop.value, product.id, buy_quantity)
                     money -= product.price_npc * buy_quantity
                     rest_quantity -= buy_quantity
+                    if buying_protocol.get(offer.get('price')) is None:
+                        buying_protocol[offer.get('price')] = buy_quantity
+                    else:
+                        buying_protocol[offer.get('price')] += buy_quantity
                 break
 
             offer_amount = offer.get('amount')
@@ -209,7 +219,8 @@ class Trader:
 
         http_connection.cancel_all_contracts()
 
-        logging.info('bought {} {}'.format(bought_quantity, product))
+        price_details = " | ".join("{} * {}".format(quantity, price) for price, quantity in buying_protocol.items())
+        logging.info('bought {} {} times\n {}'.format(product, bought_quantity, price_details))
 
         spieler.load_user_data()
         storage.load_storage()
@@ -221,7 +232,7 @@ class Trader:
         price = round(price, 2)
         http_connection.sell_to_marketplace(product, quantity, price)
 
-        logging.info("Sold {} {} for {}.".format(quantity, product, price))
+        logging.info("sold {} {} for {}".format(quantity, product, price))
 
         spieler.load_user_data()
         storage.load_storage()

@@ -13,15 +13,26 @@ import logging
 
 
 def initWurzelBot(user_name, password, server):
-    # logging.basicConfig( level=logging.DEBUG, format='%(asctime)s - %(message)s')
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
+    logging_level_env_var = os.environ.get('WURZELBOT_LOGGING_LEVEL')
+    if str(logging_level_env_var).lower() == "debug":
+        logging_level = logging.DEBUG
+    else:
+        logging_level = logging.INFO
+
+    logging_message_time = os.environ.get('WURZELBOT_LOGGING_MSG_TIME')
+    if logging_message_time is None or not logging_message_time:
+        logging_format = '%(message)s'
+    else:
+        logging_format = '%(asctime)s - %(message)s'
+
+    logging.basicConfig(stream=sys.stdout, level=logging_level, format=logging_format)
     logging.info('-------------------------------------------')
-    logging.info('Starte Wurzelbot')
+    logging.info('booting wurzelbot')
     wurzel_bot = WurzelBot(user_name, password, server)
 
     def exit_handler():
         wurzel_bot.exitBot()
-        logging.info('Beende Wurzelbot')
+        logging.info('shutting down wurzelbot')
 
     atexit.register(exit_handler)
     return wurzel_bot

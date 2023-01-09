@@ -1,4 +1,5 @@
 import datetime
+import logging
 import time
 
 from .main_objectives import FarmMoneyMain, RemoveWeed, BigQuest
@@ -18,6 +19,7 @@ class ObjectiveManager:
         self.objectives = []
 
     def create_objectives(self):
+        logging.debug('creating objectives...')
         if self.get_objective_of_class(FarmMoneyMain) is None:
             self.objectives.append(FarmMoneyMain(10))
 

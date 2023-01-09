@@ -35,6 +35,9 @@ class FarmMoney(SubObjective):
         self.usable_prev_fallback_plant_quantity = 0
         self.usable_tile_quantity = 0
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority}, amount={self.amount})"
+
     def is_reached(self):
         if self.amount == -1:
             return False
@@ -159,6 +162,9 @@ class FarmPlant(SubObjective):
         if storage.get_potential_stock_from_product(self.plant) == 0:
             self.sub_objectives.append(ProvidePlant(self.priority, self.plant))
 
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority}, plant={self.plant}, quantity={self.quantity})"
+
     def reach_quantity(self):
         if self.consider_min_quantity:
             return self.plant.min_quantity() + self.quantity
@@ -202,6 +208,9 @@ class ProvidePlant(SubObjective):
         self.usable_money_quantity = 0
 
         self.sub_objectives.append(FarmMoney(self.priority, self.product.price_npc * self.quantity, False))
+
+    def __str__(self):
+        return f"{self.__class__.__name__}(priority={self.priority}, product={self.product}, quantity={self.quantity})"
 
     def is_reached(self):
         return spieler.money - trader.min_money() >= self.product.price_npc * self.quantity

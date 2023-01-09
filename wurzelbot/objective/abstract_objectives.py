@@ -1,4 +1,6 @@
 import abc
+import logging
+import inspect
 
 
 class Objective(metaclass=abc.ABCMeta):
@@ -31,6 +33,7 @@ class Objective(metaclass=abc.ABCMeta):
     # TODO: IDEA: sub objectives can be created at any point and will be worked before super objective can work
     # TODO: IDEA: differentiate between prerequisite sub objective and parallel executed sub objectives
     def work_if_possible(self):
+        logging.debug(f"running {inspect.getmro(self.__class__)[1].__name__}: {self}")
         # if there are sub objectives, they need to be reached first before this objective can continue
         if len(self.sub_objectives) > 0:
             for sub_objective in self.sub_objectives:
