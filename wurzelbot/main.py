@@ -25,7 +25,7 @@ def initWurzelBot(user_name, password, server):
     else:
         logging_format = '%(asctime)s - %(message)s'
 
-    logging.basicConfig(stream=sys.stdout, level=logging_level, format=logging_format)
+    logging.basicConfig(stream=sys.stdout, level=logging_level, format=logging_format, datefmt='%Y-%m-%d %H:%M:%S')
     logging.info('-------------------------------------------')
     logging.info('booting wurzelbot')
     wurzel_bot = WurzelBot(user_name, password, server)
