@@ -58,6 +58,10 @@ class FarmMoney(SubObjective):
         return True
 
     def get_work_reservations(self):
+        # TODO: this should be changed if wimp serving is added
+        if len(garden_manager.get_empty_tiles()) == 0:
+            return False
+
         plants_ordered_by_profitability = trader.get_products_ordered_by_profitability()
         most_profitable_plant = plants_ordered_by_profitability[0]
         plants_ordered_by_profitability.remove(most_profitable_plant)
@@ -183,6 +187,9 @@ class FarmPlant(SubObjective):
         return True
 
     def get_work_reservations(self):
+        if len(garden_manager.get_empty_tiles()) == 0:
+            return False
+
         missing_amount = self.reach_quantity() - gardener.get_potential_quantity_of(self.plant)
         if missing_amount <= 0:
             self.usable_tile_quantity = 0
