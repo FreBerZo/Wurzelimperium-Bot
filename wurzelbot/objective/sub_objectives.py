@@ -194,7 +194,7 @@ class FarmPlant(SubObjective):
         if missing_amount <= 0:
             self.usable_tile_quantity = 0
             return False
-        tile_amount = math.ceil(missing_amount / (self.plant.harvest_quantit - 1))
+        tile_amount = math.ceil(missing_amount / (self.plant.harvest_quantity - 1))
         if self.usable_plant_quantity < tile_amount:
             tile_amount = self.usable_plant_quantity
         self.usable_tile_quantity = reservation_manager.reserve(self, Resource.TILE, tile_amount)
