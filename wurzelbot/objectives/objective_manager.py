@@ -1,11 +1,10 @@
 import datetime
 import logging
-import time
 
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.gardens.gardens import garden_manager, WeedCrop
 from .main_objectives import FarmMoneyMain, RemoveWeed, BigQuest
 
-from wurzelbot.Garten import garden_manager, WeedCrop
-from wurzelbot.HTTPCommunication import http_connection
 
 # TODO: IDEA: split into reservation phase and working phase
 #  reservation phase only requests reservation

@@ -1,10 +1,10 @@
 from enum import Enum
 
-from wurzelbot.gardener import gardener
-from wurzelbot.Garten import garden_manager
-from wurzelbot.Spieler import spieler
-from wurzelbot.Marktplatz import trader
-from wurzelbot.Lager import storage
+from wurzelbot.account_data import account_data
+from wurzelbot.gardens.gardener import gardener
+from wurzelbot.gardens.gardens import garden_manager
+from wurzelbot.product.storage import storage
+from wurzelbot.trading.trader import trader
 
 
 class Resource(Enum):
@@ -81,7 +81,7 @@ class ReservationManager:
             theoretical_available_quantity = garden_manager.get_num_of_plantable_tiles()
             actual_available_quantity = len(garden_manager.get_empty_tiles())
         else:
-            theoretical_available_quantity = spieler.money - trader.min_money()
+            theoretical_available_quantity = account_data.money - trader.min_money()
             actual_available_quantity = theoretical_available_quantity
 
         requested_quantity = existing_reservation.quantity
@@ -103,29 +103,3 @@ class ReservationManager:
 
 
 reservation_manager = ReservationManager()
-
-
-class Reservator:
-    def __init__(self, objective, resource, quantity, plant=None):
-        self.objective = objective
-        self.resource = resource
-        self.quantity = quantity
-        if resource == Resource.PLANT and plant is None:
-            raise ValueError("plant attribute is None")
-        self.plant = plant
-
-        existing_reservation = reservation_manager.get_reservation(self.objective, self.resource, self.plant)
-        self.reservation_was_overridden = False
-        if existing_reservation is not None:
-            self.reservation_was_overridden = True
-            self.prev_quantity = existing_reservation.quantity
-
-    def __enter__(self):
-        reserved_amount = reservation_manager.reserve(self.objective, self.resource, self.quantity, self.plant)
-        return reserved_amount
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.reservation_was_overridden:
-            reservation_manager.reserve(self.objective, self.resource, self.prev_quantity, self.plant)
-        else:
-            reservation_manager.free_reservation(self.objective, self.resource, self.plant)

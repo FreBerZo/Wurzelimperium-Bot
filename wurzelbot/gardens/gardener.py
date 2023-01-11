@@ -1,10 +1,10 @@
-from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Lager import storage, Box, ShelfType
-from wurzelbot.Garten import garden_manager, PlantCrop
-from wurzelbot.Spieler import spieler
-from wurzelbot.Produktdaten import ProductType
-from wurzelbot.Marktplatz import trader
 import logging
+
+from wurzelbot.account_data import account_data
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.product.storage import storage, Box, ShelfType, ProductType
+from wurzelbot.trading.trader import trader
+from .gardens import garden_manager, PlantCrop
 
 
 class Gardener:
@@ -75,7 +75,7 @@ class Gardener:
                 garden.harvest()
                 harvested = True
 
-        if spieler.is_aqua_garden_available():
+        if account_data.is_aqua_garden_available():
             garden_manager.aqua_garden.harvest()
             harvested = True
 
@@ -95,7 +95,7 @@ class Gardener:
                 garden.water_plants()
                 watered = True
 
-        if spieler.is_aqua_garden_available():
+        if account_data.is_aqua_garden_available():
             garden_manager.aqua_garden.water_plants()
 
         if watered:
@@ -113,7 +113,7 @@ class Gardener:
         http_connection.remove_weed(tile.garden.garden_id, tile.tile_id)
 
         garden_manager.update_all()
-        spieler.load_user_data()
+        account_data.load_user_data()
 
 
 gardener = Gardener()

@@ -1,17 +1,16 @@
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.gardens.gardener import gardener
+from wurzelbot.product.product_data import product_data
+from wurzelbot.reservation.reservation import reservation_manager, Resource
 from .abstract_objectives import MainObjective
 from .sub_objectives import FarmMoney, FarmPlant
-
-from wurzelbot.reservation import reservation_manager, Resource
-from wurzelbot.gardener import gardener
-from wurzelbot.Produktdaten import product_data
-from wurzelbot.HTTPCommunication import http_connection
 
 
 class FarmMoneyMain(MainObjective):
     """
     A test MainObjective that endlessly farms money.
     """
-    
+
     def __init__(self, priority):
         super().__init__(priority)
         self.sub_objectives.append(FarmMoney(self.priority, -1))
@@ -61,7 +60,7 @@ class BigQuest(MainObjective):
             reservation_manager.reserve(self, Resource.PLANT, quantity, product)
 
     def __str__(self):
-        return f"{self.__class__.__name__}(priority={self.priority}, year={self.year_id+2019}, month={self.quest_id})"
+        return f"{self.__class__.__name__}(priority={self.priority}, year={self.year_id + 2019}, month={self.quest_id})"
 
     def is_reached(self):
         # the objective is always reached of the sub objectives finished

@@ -1,3 +1,5 @@
+# TODO: the console is not supported anymore, repair or remove this
+
 from logging import log
 import wurzelbot.main as wbot
 
@@ -47,7 +49,7 @@ def init():
     
     global wurzelBot
     wurzelBot = wbot.initWurzelBot()
-    wurzelBot.launchBot(server, user, pw)
+    wurzelBot.init_bot(server, user, pw)
 
 def closeConnection():
     print('Close connection...\n')
@@ -57,7 +59,7 @@ def closeConnection():
 def help():
     print('Available commands:')
     print('-------------------')
-    print('details      Show details to the products')
+    print('details      Show details to the product')
     print('             Opt. argument: "all"')
     print('exit         Close connection and exit bot')
     print('grow         Grow a given plant')

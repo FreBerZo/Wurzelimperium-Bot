@@ -1,13 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Produktdaten import product_data
-from wurzelbot.Spieler import spieler
-from wurzelbot.Lager import storage, Box
+import datetime
 import logging
 import time
-import datetime
+
+from wurzelbot.account_data import account_data
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.product.product_data import product_data
+from wurzelbot.product.storage import Box
 
 GARDEN_WIDTH = 17
 GARDEN_HEIGHT = 12
@@ -151,11 +149,10 @@ class Field:
 
 
 class Garden:
-    
     _lenX = 17
     _lenY = 12
     _nMaxFields = _lenX * _lenY
-    
+
     def __init__(self, garden_id):
         self.garden_id = garden_id
         self.garden_field = Field(self)
@@ -202,7 +199,7 @@ class Garden:
                 cur_x = pos_x + x
                 cur_y = pos_y + y
                 if not self.garden_field.tile_is_valid(cur_x, cur_y) \
-                   or not self.garden_field.get_tile(cur_x, cur_y).is_empty():
+                        or not self.garden_field.get_tile(cur_x, cur_y).is_empty():
                     return False
         return True
 
@@ -227,7 +224,7 @@ class Garden:
 
 
 class AquaGarden(Garden):
-    
+
     def __init__(self):
         Garden.__init__(self, 101)
 
@@ -243,7 +240,7 @@ class AquaGarden(Garden):
             http_connection.water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
 
         logging.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
-        
+
     def harvest(self):
         """
         Erntet alles im Wassergarten.
@@ -261,13 +258,13 @@ class GardenManager:
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
         self.gardens = []
-        tmp_number_of_gardens = spieler.number_of_gardens
+        tmp_number_of_gardens = account_data.number_of_gardens
         for i in range(1, tmp_number_of_gardens + 1):
             garden = Garden(i)
             self.gardens.append(garden)
             garden.update_garden()
 
-        if spieler.is_aqua_garden_available() is True:
+        if account_data.is_aqua_garden_available() is True:
             self.aqua_garden = AquaGarden()
 
     def get_garden_by_id(self, garden_id):

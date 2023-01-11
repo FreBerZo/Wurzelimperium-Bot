@@ -1,6 +1,6 @@
 import abc
-import logging
 import inspect
+import logging
 
 
 class Objective(metaclass=abc.ABCMeta):

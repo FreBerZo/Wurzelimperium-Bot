@@ -1,15 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Created on 23.05.2019
 
 @author: MrFlamez
-'''
- 
+"""
+
 import json
-from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.trading import Shop
 from enum import Enum
+
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.trading.shop import Shop
 
 
 class ProductType(Enum):
@@ -53,7 +52,7 @@ class Product:
 
     def min_quantity(self):
         if self.is_plant():
-            from wurzelbot.Garten import garden_manager
+            from wurzelbot.gardens.gardens import garden_manager
             return int(garden_manager.get_num_of_plantable_tiles() / (self.size[0] * self.size[1]))
         return 0
 
@@ -70,10 +69,10 @@ class Product:
 
 
 class ProductData:
-    
+
     def __init__(self):
         self.__products = []
-    
+
     def load_prices(self):
         """
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
@@ -82,7 +81,7 @@ class ProductData:
         for product in self.__products:
             if product.name in npc_prices.keys():
                 product.price_npc = npc_prices[product.name]
-                
+
         # Coin manuell setzen, dieser ist in der Tabelle der Hilfe nicht enthalten
         coins = self.get_product_by_name('Coins')
         coins.price_npc = float(300)
@@ -99,7 +98,7 @@ class ProductData:
             product_ids = http_connection.get_product_ids_from_shop(shop.value)
             for product_id in product_ids:
                 self.get_product_by_id(product_id).buy_in_shop = shop
-    
+
     def get_product_by_id(self, product_id):
         for product in self.__products:
             if int(product_id) == product.id:
@@ -109,7 +108,7 @@ class ProductData:
         for product in self.__products:
             if int(crop_id) == product.crop_id:
                 return product
-            
+
     def get_product_by_name(self, name):
         for product in self.__products:
             if name.lower() == product.name.lower():
@@ -118,7 +117,7 @@ class ProductData:
 
     def get_tradable_plants(self):
         return [product for product in self.__products if product.is_tradable and product.is_plant()]
-        
+
     def get_list_of_all_product_ids(self):
         return [product.id for product in self.__products]
 
@@ -143,11 +142,11 @@ class ProductData:
                                            crop=products[key]['crop'],
                                            plantable=products[key]['plantable'],
                                            time=products[key]['time']))
-                
+
         self.load_prices()
         self.load_tradable_products()
         self.load_shops()
-    
+
     def print_all(self):
         for product in sorted(self.__products, key=lambda x: x.name.lower()):
             product.print_all()

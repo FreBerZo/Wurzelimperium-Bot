@@ -1,17 +1,24 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Created on 21.03.2017
 
 @author: MrFlamez
-'''
+"""
 
-from urllib.parse import urlencode
-import json, re, httplib2, yaml, time, logging, math, io
+import io
+import json
+import logging
+import math
+import re
+import time
 from http.cookies import SimpleCookie
-from wurzelbot.Session import Session
-from lxml import html, etree
+from urllib.parse import urlencode
+
+import httplib2
+import yaml
 from bs4 import BeautifulSoup
+from lxml import html, etree
+
+from .session import Session
 
 # Defines
 HTTP_STATE_OK = 200
@@ -342,9 +349,9 @@ class HTTPConnection(object):
         also 24 Stunden + 30 Sekunden (Sicherheit) zurück, wurde das Feld zwar bereits gegossen,
         kann jedoch wieder gegossen werden.
         """
-        oneDayInSeconds = (24*60*60) + 30
+        oneDayInSeconds = (24 * 60 * 60) + 30
         currentTimeInSeconds = time.time()
-        waterDateInSeconds = int(jContent['water'][fieldID-1][1])
+        waterDateInSeconds = int(jContent['water'][fieldID - 1][1])
 
         if waterDateInSeconds == '0' or (currentTimeInSeconds - waterDateInSeconds) > oneDayInSeconds:
             return False
@@ -361,7 +368,7 @@ class HTTPConnection(object):
             splittedPlantSize = str(plantSize).split('x')
             sx = splittedPlantSize[0]
             sy = splittedPlantSize[1]
-            
+
             if not self.__is_field_watered(jContent, plantedFieldID):
                 fieldIDToBeWatered = plantedFieldID
                 plantsToBeWatered['fieldID'].append(fieldIDToBeWatered)
@@ -663,21 +670,21 @@ class HTTPConnection(object):
     # Shops
     def __parse_npc_prices_from_html(self, html_data):
         """Parsen aller NPC Preise aus dem HTML Skript der Spielehilfe."""
-        #ElementTree benötigt eine Datei zum Parsen.
-        #Mit BytesIO wird eine Datei im Speicher angelegt, nicht auf der Festplatte.
+        # ElementTree benötigt eine Datei zum Parsen.
+        # Mit BytesIO wird eine Datei im Speicher angelegt, nicht auf der Festplatte.
         my_parser = etree.HTMLParser(recover=True)
         html_tree = etree.fromstring(str(html_data), parser=my_parser)
 
         table = html_tree.find('./body/div[@id="content"]/table')
-        
+
         dictResult = {}
-        
+
         for row in table.iter('tr'):
-            
+
             produktname = row[0].text
             npc_preis = row[1].text
-            
-            #Bei der Tabellenüberschrift ist der Text None
+
+            # Bei der Tabellenüberschrift ist der Text None
             if produktname != None and npc_preis != None:
                 # NPC-Preis aufbereiten
                 npc_preis = str(npc_preis)
@@ -689,9 +696,9 @@ class HTTPConnection(object):
                     npc_preis = None
                 else:
                     npc_preis = float(npc_preis)
-                    
+
                 dictResult[produktname] = npc_preis
-                
+
         return dictResult
 
     def get_npc_prices(self):
@@ -714,8 +721,8 @@ class HTTPConnection(object):
         self.__check_http_ok(response)
 
     def buy_from_aqua_shop(self, productId: int, amount: int = 1):
-        adresse = 'ajax/ajax.php?products={}:{}&do=shopBuyProducts&type=aqua&token={}'\
-                  .format(productId, amount, self.__token)
+        adresse = 'ajax/ajax.php?products={}:{}&do=shopBuyProducts&type=aqua&token={}' \
+            .format(productId, amount, self.__token)
 
         response, content = self.__send_request(f'{adresse}')
         self.__check_http_ok(response)

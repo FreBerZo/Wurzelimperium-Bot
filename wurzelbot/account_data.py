@@ -1,25 +1,21 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Created on 21.03.2017
 @author: MrFlamez
-'''
-import logging
+"""
 import re
-
-from wurzelbot.HTTPCommunication import http_connection
 from collections import namedtuple
 
+from wurzelbot.communication.http_communication import http_connection
 
 Login = namedtuple('Login', 'server user password')
 
 
-class Spieler:
+class AccountData:
     """
     Diese Daten-Klasse enthält alle wichtigen Informationen über den Spieler.
     """
-    
-    accountLogin = None
+
+    account_login = None
     user_name = None
     user_id = None
     money = None
@@ -55,10 +51,10 @@ class Spieler:
 
     def is_aqua_garden_available(self):
         return self.__aquaGardenAvailability
-    
+
     def isEMailAdressConfirmed(self):
         return self.__eMailAdressConfirmed
-    
+
     def load_user_data(self):
         """
         Liest den Spielerdaten vom Server und speichert sie in der Klasse.
@@ -93,13 +89,13 @@ class Spieler:
             i, var_type = value
             stat_value = var_type(re.findall(r'<td>(.*?)</td>', stats[i])[1].replace(r'&nbsp;', ''))
             setattr(self, key, stat_value)
-        
+
     def setConfirmedEMailAdressFromServer(self, http):
         """
         Liest vom Server, ob die E-Mail Adresse bestätigt ist und speichert den Status in der KLasse.
         """
         tmpEMailConf = http.check_if_email_address_is_confirmed()
         self.__eMailAdressConfirmed = tmpEMailConf
-            
 
-spieler = Spieler()
+
+account_data = AccountData()

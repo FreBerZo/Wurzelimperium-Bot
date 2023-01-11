@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import time
-
 from enum import Enum
 
-from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Produktdaten import product_data, ProductType
+from wurzelbot.communication.http_communication import http_connection
+from .product_data import product_data, ProductType
 
 
 class ShelfType(Enum):
@@ -16,6 +13,7 @@ class ShelfType(Enum):
     HONEY = 'honey'
     SNAIL = 'snail'
 
+
 # TODO: check if this is correct
 PRODUCTTYPE_TO_SHELFTYPE = {
     ShelfType.NORMAL: [ProductType.DECORATION, ProductType.VEGETABLES],
@@ -25,6 +23,7 @@ PRODUCTTYPE_TO_SHELFTYPE = {
     ShelfType.HONEY: [ProductType.HONEY],
     ShelfType.SNAIL: [ProductType.SNAIL],
 }
+
 
 class Box:
     def __init__(self, product, quantity):
@@ -42,7 +41,7 @@ class Box:
         return self.quantity <= 0
 
     def potential_quantity(self):
-        from wurzelbot.gardener import gardener
+        from wurzelbot.gardens.gardener import gardener
         return gardener.get_potential_quantity_of(self.product)
 
     def min_quantity(self):
@@ -129,7 +128,7 @@ class Shelf:
 
 
 class Storage:
-    
+
     def __init__(self):
         self.shelves = [
             Shelf(ShelfType.NORMAL),
@@ -206,7 +205,7 @@ class Storage:
         return box.quantity
 
     def get_potential_stock_from_product(self, product):
-        from wurzelbot.gardener import gardener
+        from wurzelbot.gardens.gardener import gardener
         return gardener.get_potential_quantity_of(product)
 
     def has_potential_min_quantity_for(self, product):

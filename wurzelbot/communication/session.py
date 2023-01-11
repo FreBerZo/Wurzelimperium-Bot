@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Created on 21.01.2017
 
 @author: MrFlamez
-'''
+"""
 
-import time, logging
+import logging
+import time
 
 
 class Session(object):
@@ -14,13 +13,13 @@ class Session(object):
     Die Session Klasse ist das Python-Pendant einer PHP-Session und dieser daher nachempfunden.
     """
 
-    #Gültigkeitsdauer der Session (2 h -> 7200 s)
-    __lifetime         = 7200
-    __lifetime_reserve =  300
+    # Gültigkeitsdauer der Session (2 h -> 7200 s)
+    __lifetime = 7200
+    __lifetime_reserve = 300
 
-    #Eine Reservezeit dient dazu, kurz vor Ende der Session rechtzeitig alle Aktionen
-    #abschließen zu können
-    
+    # Eine Reservezeit dient dazu, kurz vor Ende der Session rechtzeitig alle Aktionen
+    # abschließen zu können
+
     def __init__(self):
         """
         Initialisierung aller Attribute mit einem Standardwert.
@@ -36,7 +35,7 @@ class Session(object):
         """Prüft, ob die offene Session abgelaufen ist."""
         return time.time() > self.__endTime
 
-    def isSessionValid(self): #TODO: Prüfen wie die Methode sinnvoll eingesetzt werden kann
+    def isSessionValid(self):  # TODO: Prüfen wie die Methode sinnvoll eingesetzt werden kann
         """Prüft anhand verschiedener Kriterien, ob die aktuelle Session gültig ist."""
         bReturn = True
         if (self.__sessionID == None): bReturn = False
@@ -53,7 +52,7 @@ class Session(object):
 
         self.__startTime = time.time()
         self.__endTime = self.__startTime + (self.__lifetime - self.__lifetime_reserve)
-        
+
         sID = str(self.__sessionID)
         self.__logSession.info('Session (ID: {}) geöffnet'.format(sID))
 

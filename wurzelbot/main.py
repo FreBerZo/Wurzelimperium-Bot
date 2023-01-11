@@ -1,15 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-'''
+"""
 Created on 21.03.2017
 
 @author: MrFlamez
-'''
-from wurzelbot.WurzelBot import WurzelBot
-import sys
-import os
+"""
 import logging
+import os
 import signal
+import sys
+
+from wurzelbot.WurzelBot import WurzelBot
 
 
 def initWurzelBot(user_name, password, server):
@@ -46,7 +45,7 @@ def main():
 
     # Login und Initialisierung des Bots
     wurzel_bot = initWurzelBot(user, pw, int(server))
-    wurzel_bot.launchBot()
+    wurzel_bot.init_bot()
 
     # automatisches pflanzen starten
     wurzel_bot.run_objectives()

@@ -1,13 +1,14 @@
 import math
 
-from wurzelbot.Spieler import spieler
-from wurzelbot.Marktplatz import trader
-from wurzelbot.Lager import storage
-from wurzelbot.Garten import garden_manager
-from wurzelbot.gardener import gardener
-from wurzelbot.reservation import reservation_manager, Reservator, Resource
-
+from wurzelbot.account_data import account_data
+from wurzelbot.gardens.gardener import gardener
+from wurzelbot.gardens.gardens import garden_manager
+from wurzelbot.product.storage import storage
+from wurzelbot.reservation.reservation import reservation_manager, Resource
+from wurzelbot.reservation.reservator import Reservator
+from wurzelbot.trading.trader import trader
 from .abstract_objectives import SubObjective
+
 
 # TODO: implement parallel sub objectives and main objectives work
 # TODO: add work required function, if only waiting is required because objective is nearly reached
@@ -20,6 +21,7 @@ class FarmMoney(SubObjective):
     """
     Farms certain amount of money.
     """
+
     def __init__(self, priority, amount, force_efficiency=True, consider_min_quantity=True):
         super().__init__(priority)
         self.amount = amount
@@ -42,8 +44,8 @@ class FarmMoney(SubObjective):
         if self.amount == -1:
             return False
         if self.consider_min_quantity:
-            return spieler.money >= self.amount + trader.min_money()
-        return spieler.money >= self.amount
+            return account_data.money >= self.amount + trader.min_money()
+        return account_data.money >= self.amount
 
     def finish(self):
         if self.plant is not None:
@@ -96,7 +98,7 @@ class FarmMoney(SubObjective):
                     trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
                 else:
                     # this doesn't need reservation as it uses the min money amount to buy the most profitable plant
-                    trader.buy_cheapest_of(self.plant, 4, round(spieler.money / 2, 2))
+                    trader.buy_cheapest_of(self.plant, 4, round(account_data.money / 2, 2))
 
         self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.plant)
         if self.prev_plant is not None:
@@ -154,6 +156,7 @@ class FarmPlant(SubObjective):
     """
     Farms a certain amount for a plant. Initial stock of plant is irrelevant.
     """
+
     def __init__(self, priority, product, quantity, consider_min_quantity=True):
         super().__init__(priority)
         self.plant = product
@@ -175,7 +178,8 @@ class FarmPlant(SubObjective):
         return self.quantity
 
     def get_reservations(self):
-        self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, self.reach_quantity(), self.plant)
+        self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, self.reach_quantity(),
+                                                                 self.plant)
         return self.usable_plant_quantity != 0
 
     def is_reached(self):
@@ -208,6 +212,7 @@ class ProvidePlant(SubObjective):
     """
     Provides a certain amount of a plant if there is NONE or not enough to farm available. e.g. less than 4
     """
+
     def __init__(self, priority, product, quantity=4):
         super().__init__(priority)
         self.product = product
@@ -220,7 +225,7 @@ class ProvidePlant(SubObjective):
         return f"{self.__class__.__name__}(priority={self.priority}, product={self.product}, quantity={self.quantity})"
 
     def is_reached(self):
-        return spieler.money - trader.min_money() >= self.product.price_npc * self.quantity
+        return account_data.money - trader.min_money() >= self.product.price_npc * self.quantity
 
     def get_finish_reservations(self):
         self.usable_money_quantity = reservation_manager.reserve(self, Resource.MONEY,
@@ -233,6 +238,6 @@ class ProvidePlant(SubObjective):
         return True
 
     def work(self):
-        # work is done by sub objective and buying the plant is done at finish therefore there is no need to work
-        # also this should never be reached, because if so this objective is in an endless loop
+        # work is done by sub objectives and buying the plant is done at finish therefore there is no need to work
+        # also this should never be reached, because if so this objectives is in an endless loop
         raise NotImplementedError("Provide plant work function has been reached.")

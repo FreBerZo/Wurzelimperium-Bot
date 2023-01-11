@@ -1,13 +1,14 @@
-from wurzelbot.Spieler import spieler
-from wurzelbot.HTTPCommunication import http_connection
 import logging
+
+from wurzelbot.account_data import account_data
+from wurzelbot.communication.http_communication import http_connection
 
 
 class Collector:
     def collect_daily_login_bonus(self):
         logging.info("collecting bonus...")
         collected_bonus = 0
-        bonuses = spieler.daily_login_bonus
+        bonuses = account_data.daily_login_bonus
         for day, bonus in bonuses['data']['rewards'].items():
             if 'done' not in bonus:
                 if any(price in bonus for price in ('money', 'products')):

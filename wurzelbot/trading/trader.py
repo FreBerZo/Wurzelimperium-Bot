@@ -1,25 +1,22 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import logging
-import datetime
-
-from wurzelbot.HTTPCommunication import http_connection
-from wurzelbot.Garten import garden_manager
-from wurzelbot.Produktdaten import product_data
-from wurzelbot.Spieler import spieler
-from wurzelbot.Lager import storage
-from wurzelbot.utils import cache
-
-
-'''
+"""
 Created on 15.05.2019
 
 @author: MrFlamez
-'''
+"""
+
+import datetime
+import logging
+
+from wurzelbot.account_data import account_data
+from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.gardens.gardens import garden_manager
+from wurzelbot.product.product_data import product_data
+from wurzelbot.product.storage import storage
+from wurzelbot.utils import cache
 
 
 class Trader:
-    
+
     def __init__(self):
         # TODO: this shouldn't be cached here maybe make some wimp class
         self.wimp_data = {}
@@ -82,7 +79,7 @@ class Trader:
         if market_price < official_price:
             return market_price - 0.01
         return official_price - 0.01
-    
+
     def get_cheapest_offer(self, product):
         """
         Ermittelt das günstigste Angebot eines Produkts.
@@ -97,41 +94,41 @@ class Trader:
         """
         Ermittelt alle Angebote eines Produkts.
         """
-        
+
         if product.is_tradable:
             # TODO: this should be cached somehow maybe with some market class
             # TODO: somehow exclude own offers
             return http_connection.get_offers_from_product(product.id)
         return []
-    
+
     def findBigGapInProductOffers(self, id, npcPrice):
         """
         Ermittelt eine große Lücke (> 10 %) zwischen den Angeboten und gibt diese zurück.
         """
-        
+
         listOffers = self.get_offers_for(id)
         listPrices = []
 
         if (listOffers != None):
-            
-            #Alle Preise in einer Liste sammeln
+
+            # Alle Preise in einer Liste sammeln
             for element in listOffers:
                 listPrices.append(element[1])
-            
-            if (npcPrice != None and id != 0): #id != 0: Coins nicht sortieren
+
+            if (npcPrice != None and id != 0):  # id != 0: Coins nicht sortieren
                 iList = range(0, len(listPrices))
                 iList.reverse()
                 for i in iList:
                     if listPrices[i] > npcPrice:
                         del listPrices[i]
-            
+
             gaps = []
-            #Zum Vergleich werden mindestens zwei Einträge benötigt.
+            # Zum Vergleich werden mindestens zwei Einträge benötigt.
             if (len(listPrices) >= 2):
-                for i in range(0, len(listPrices)-1):
-                    if (((listPrices[i+1] / 1.1) - listPrices[i]) > 0.0):
-                        gaps.append([listPrices[i], listPrices[i+1]])
-            
+                for i in range(0, len(listPrices) - 1):
+                    if (((listPrices[i + 1] / 1.1) - listPrices[i]) > 0.0):
+                        gaps.append([listPrices[i], listPrices[i + 1]])
+
             return gaps
 
     def make_space_in_storage_for_products(self, products):
@@ -170,12 +167,12 @@ class Trader:
                 price = self.get_sell_price_for(product)
             trade_products[product] = {'quantity': storage.get_stock_from_product(product), 'price': price}
         logging.debug("handling overfilled storage by moving {} products to a temporary contract"
-                     .format(len(trade_products)))
-        http_connection.create_contract(spieler.user_name, trade_products)
+                      .format(len(trade_products)))
+        http_connection.create_contract(account_data.user_name, trade_products)
 
     def buy_cheapest_of(self, product, quantity, money=None):
         if money is None:
-            money = spieler.money - self.min_money()
+            money = account_data.money - self.min_money()
         if money <= 0:
             return 0
 
@@ -188,7 +185,7 @@ class Trader:
             if product.buy_in_shop is not None and offer.get('price') > product.price_npc:
                 buy_quantity = rest_quantity
                 if money < product.price_npc * buy_quantity:
-                    buy_quantity = int(money/product.price_npc)
+                    buy_quantity = int(money / product.price_npc)
                 if buy_quantity > 0:
                     http_connection.buy_from_shop(product.buy_in_shop.value, product.id, buy_quantity)
                     money -= product.price_npc * buy_quantity
@@ -205,7 +202,7 @@ class Trader:
             if offer_amount < rest_quantity:
                 buy_quantity = offer_amount
             if money < buy_quantity * offer_price:
-                buy_quantity = int(money/offer_price)
+                buy_quantity = int(money / offer_price)
 
             if buy_quantity > 0:
                 http_connection.buy_from_marketplace(product, offer, buy_quantity)
@@ -222,7 +219,7 @@ class Trader:
         price_details = " | ".join("{} * {}".format(quantity, price) for price, quantity in buying_protocol.items())
         logging.info('bought {} {} times\n {}'.format(product, bought_quantity, price_details))
 
-        spieler.load_user_data()
+        account_data.load_user_data()
         storage.load_storage()
         storage.use_product(product)
 
@@ -234,7 +231,7 @@ class Trader:
 
         logging.info("sold {} {} for {}".format(quantity, product, price))
 
-        spieler.load_user_data()
+        account_data.load_user_data()
         storage.load_storage()
         storage.use_product(product)
 
@@ -255,12 +252,11 @@ class Trader:
 
         money_problem = False
         sell_price = self.get_sell_price_for(product)
-        if sell_price * sell_amount * 0.1 > spieler.money:
-            sell_amount = int(spieler.money / (sell_price * 0.1))
+        if sell_price * sell_amount * 0.1 > account_data.money:
+            sell_amount = int(account_data.money / (sell_price * 0.1))
             money_problem = True
         if sell_amount > self.min_sell_quantity() or money_problem:
             self.sell_to_marketplace(product, sell_amount, self.get_sell_price_for(product))
 
 
 trader = Trader()
-        
