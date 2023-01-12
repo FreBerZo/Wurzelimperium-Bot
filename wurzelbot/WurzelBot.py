@@ -32,7 +32,7 @@ class WurzelBot:
         self.terminating = False
 
     def init_bot(self):
-        # TODO: tidy up this method
+        # TODO: tidy up this method, maybe make loader class
         """
         Diese Methode startet und initialisiert den Wurzelbot. Dazu wird ein Login mit den
         übergebenen Logindaten durchgeführt und alles nötige initialisiert.
@@ -48,6 +48,7 @@ class WurzelBot:
 
         account_data.load_stats()
 
+        # TODO: move this to garden manager
         honey_farm_availability = http_connection.is_honey_farm_available(account_data.level)
         account_data.setHoneyFarmAvailability(honey_farm_availability)
 

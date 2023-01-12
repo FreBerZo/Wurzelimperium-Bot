@@ -5,6 +5,7 @@ import time
 from wurzelbot.account_data import account_data
 from wurzelbot.communication.http_communication import http_connection
 from wurzelbot.product.product_data import product_data
+# TODO: remove this import
 from wurzelbot.product.storage import Box
 
 GARDEN_WIDTH = 17

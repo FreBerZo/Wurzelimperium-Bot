@@ -146,6 +146,8 @@ class Trader:
         # Normally players can't plant plants that can not be shown in storage, if overfilled because of a
         # UI problem, but the bot doesn't care. Therefor overfilling the storage is not a problem.
         products_in_shelf = storage.get_products(shelf_type)
+        if len(list(set(products) - set(products_in_shelf))) == 0:
+            return
         tradable_products_in_shelf = [product for product in storage.get_products(shelf_type, product_type)
                                       if product.is_tradable]
         removable_products = list(set(tradable_products_in_shelf) - set(products))

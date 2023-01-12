@@ -8,6 +8,7 @@ from .gardens import garden_manager, PlantCrop
 
 
 class Gardener:
+    # TODO: remove this function from here
     def get_potential_quantity_of(self, product):
         planted_quantity = 0
         for crop in garden_manager.get_crops_flat_from_class(PlantCrop):
@@ -15,6 +16,7 @@ class Gardener:
                 planted_quantity += 1
         return storage.get_stock_from_product(product) + planted_quantity * product.harvest_quantity
 
+    # TODO: remove this function from here
     def get_potential_plants(self):
         """Returns all owned seeds ordered by the quantity in storage and potential seeds after harvesting"""
         boxes = []
