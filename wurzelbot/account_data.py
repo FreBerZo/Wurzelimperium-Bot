@@ -27,9 +27,8 @@ class AccountData:
     daily_login_bonus = None
     number_of_gardens = None
     guild = None
-    __honeyFarmAvailability = None
-    __aquaGardenAvailability = None
-    __eMailAdressConfirmed = None
+    honey_farm_available = None
+    aqua_garden_available = None
 
     # Quests completed
     quests_completed = None
@@ -40,20 +39,10 @@ class AccountData:
     opuntia_quests_completed = None
     saguaro_quests_completed = None
 
-    def setHoneyFarmAvailability(self, bAvl):
-        self.__honeyFarmAvailability = bAvl
+    def load_garden_availability(self):
+        account_data.honey_farm_available = http_connection.is_honey_farm_available(account_data.level)
 
-    def isHoneyFarmAvailable(self):
-        return self.__honeyFarmAvailability
-
-    def setAquaGardenAvailability(self, bAvl):
-        self.__aquaGardenAvailability = bAvl
-
-    def is_aqua_garden_available(self):
-        return self.__aquaGardenAvailability
-
-    def isEMailAdressConfirmed(self):
-        return self.__eMailAdressConfirmed
+        account_data.aqua_garden_available = http_connection.is_aqua_garden_available(account_data.level)
 
     def load_user_data(self):
         """
@@ -89,13 +78,6 @@ class AccountData:
             i, var_type = value
             stat_value = var_type(re.findall(r'<td>(.*?)</td>', stats[i])[1].replace(r'&nbsp;', ''))
             setattr(self, key, stat_value)
-
-    def setConfirmedEMailAdressFromServer(self, http):
-        """
-        Liest vom Server, ob die E-Mail Adresse bestätigt ist und speichert den Status in der KLasse.
-        """
-        tmpEMailConf = http.check_if_email_address_is_confirmed()
-        self.__eMailAdressConfirmed = tmpEMailConf
 
 
 account_data = AccountData()

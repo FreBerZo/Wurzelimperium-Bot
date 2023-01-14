@@ -40,6 +40,7 @@ class WurzelBot:
 
         login_data = Login(server=self.server, user=self.user_name, password=self.password)
 
+        # TODO: login can fail, because wurzelimperium servers restart daily
         http_connection.log_in(login_data)
         logging.debug('login successfull')
         logging.debug('loading data...')
@@ -48,12 +49,7 @@ class WurzelBot:
 
         account_data.load_stats()
 
-        # TODO: move this to garden manager
-        honey_farm_availability = http_connection.is_honey_farm_available(account_data.level)
-        account_data.setHoneyFarmAvailability(honey_farm_availability)
-
-        aqua_garden_availability = http_connection.is_aqua_garden_available(account_data.level)
-        account_data.setAquaGardenAvailability(aqua_garden_availability)
+        account_data.load_garden_availability()
 
         product_data.init_products()
 

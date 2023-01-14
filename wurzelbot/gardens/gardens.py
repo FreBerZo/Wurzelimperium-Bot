@@ -265,7 +265,7 @@ class GardenManager:
             self.gardens.append(garden)
             garden.update_garden()
 
-        if account_data.is_aqua_garden_available() is True:
+        if account_data.aqua_garden_available is True:
             self.aqua_garden = AquaGarden()
 
     def get_garden_by_id(self, garden_id):

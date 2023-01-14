@@ -58,7 +58,8 @@ class FarmMoney(SubObjective):
             reservation_manager.free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
         reservation_manager.free_reservation(self, Resource.TILE)
         return True
-
+    
+    # TODO: find out why why this sub objective does not plant after buying
     def get_work_reservations(self):
         # TODO: this should be changed if wimp serving is added
         if len(garden_manager.get_empty_tiles()) == 0:

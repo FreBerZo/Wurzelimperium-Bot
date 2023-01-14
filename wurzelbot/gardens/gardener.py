@@ -77,7 +77,7 @@ class Gardener:
                 garden.harvest()
                 harvested = True
 
-        if account_data.is_aqua_garden_available():
+        if account_data.aqua_garden_available:
             garden_manager.aqua_garden.harvest()
             harvested = True
 
@@ -97,7 +97,7 @@ class Gardener:
                 garden.water_plants()
                 watered = True
 
-        if account_data.is_aqua_garden_available():
+        if account_data.aqua_garden_available:
             garden_manager.aqua_garden.water_plants()
 
         if watered:

@@ -85,6 +85,7 @@ class HTTPConnection(object):
         if j_content['success'] == 1:
             return j_content
         else:
+            logging.debug(j_content)
             raise JSONError('could not generate json')
 
     def __generate_json_and_check_ok(self, content: str):
@@ -93,7 +94,8 @@ class HTTPConnection(object):
         if j_content['status'] == 'ok':
             return j_content
         else:
-            raise JSONError()
+            logging.debug(j_content)
+            raise JSONError('json content is not ok')
 
     def __get_token_from_url(self, url):
         """Ermittelt aus einer übergebenen URL den security token."""
@@ -289,13 +291,6 @@ class HTTPConnection(object):
         self.__check_http_ok(response)
         jContent = self.__generate_json_and_check_success(content)
         return jContent
-
-    def check_if_email_address_is_confirmed(self):
-        """Prüft, ob die E-Mail-Adresse im Profil bestätigt ist."""
-        response, content = self.__send_request('nutzer/profil.php')
-        self.__check_http_ok(response)
-        result = re.search(r'Unbestätigte Email:', content)
-        return result is None
 
     # TODO: I don't know what this is, maybe redo or remove
     def get_user_list(self, iStart, iEnd):
