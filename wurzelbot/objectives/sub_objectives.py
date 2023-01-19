@@ -131,7 +131,8 @@ class FarmMoney(SubObjective):
         planted_fallback_plant = gardener.plant(self.fallback_plant,
                                                 min(self.usable_tile_quantity, self.usable_fallback_plant_quantity))
 
-        sell_amount = self.usable_plant_quantity - planted_plant
+        # TODO: size of plant should be considered
+        sell_amount = self.usable_plant_quantity - garden_manager.get_num_of_plantable_tiles()
         if sell_amount > 0:
             trader.sell(self.plant, sell_amount)
         sell_amount = self.usable_fallback_plant_quantity - planted_fallback_plant
