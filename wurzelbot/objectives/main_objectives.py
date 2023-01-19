@@ -1,7 +1,7 @@
-from wurzelbot.communication.http_communication import http_connection
-from wurzelbot.gardens.gardener import gardener
-from wurzelbot.product.product_data import product_data
-from wurzelbot.reservation.reservation import reservation_manager, Resource
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.gardener import Gardener
+from wurzelbot.product.product_data import ProductData
+from wurzelbot.reservation.reservation import ReservationManager, Resource
 from .abstract_objectives import MainObjective
 from .sub_objectives import FarmMoney, FarmPlant
 
@@ -38,11 +38,11 @@ class RemoveWeed(MainObjective):
         return True
 
     def get_finish_reservations(self):
-        self.usable_money_quantity = reservation_manager.reserve(self, Resource.MONEY, self.crop.remove_cost)
+        self.usable_money_quantity = ReservationManager().reserve(self, Resource.MONEY, self.crop.remove_cost)
         return self.usable_money_quantity >= self.crop.remove_cost
 
     def finish(self):
-        gardener.remove_crop(self.crop)
+        Gardener().remove_crop(self.crop)
         return True
 
 
@@ -55,9 +55,9 @@ class BigQuest(MainObjective):
         self.needed_products = needed_products
 
         for product_id, quantity in self.needed_products.items():
-            product = product_data.get_product_by_id(int(product_id))
+            product = ProductData().get_product_by_id(int(product_id))
             self.sub_objectives.append(FarmPlant(self.priority, product, quantity))
-            reservation_manager.reserve(self, Resource.PLANT, quantity, product)
+            ReservationManager().reserve(self, Resource.PLANT, quantity, product)
 
     def __str__(self):
         return f"{self.__class__.__name__}(priority={self.priority}, year={self.year_id + 2019}, month={self.quest_id})"
@@ -68,8 +68,8 @@ class BigQuest(MainObjective):
 
     def get_finish_reservations(self):
         for product_id, quantity in self.needed_products.items():
-            product = product_data.get_product_by_id(int(product_id))
-            reserved_quantity = reservation_manager.reserve(self, Resource.PLANT, quantity, product)
+            product = ProductData().get_product_by_id(int(product_id))
+            reserved_quantity = ReservationManager().reserve(self, Resource.PLANT, quantity, product)
             if reserved_quantity < quantity:
                 return False
         return True
@@ -77,7 +77,7 @@ class BigQuest(MainObjective):
     def finish(self):
 
         for product_id, quantity in self.needed_products.items():
-            product = product_data.get_product_by_id(int(product_id))
-            http_connection.send_big_quest_data(self.year_id, self.quest_id, product, quantity)
-            reservation_manager.free_reservation(self, Resource.PLANT, product)
+            product = ProductData().get_product_by_id(int(product_id))
+            HTTPConnection().send_big_quest_data(self.year_id, self.quest_id, product, quantity)
+            ReservationManager().free_reservation(self, Resource.PLANT, product)
         return True

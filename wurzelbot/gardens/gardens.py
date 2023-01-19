@@ -2,9 +2,10 @@ import datetime
 import logging
 import time
 
-from wurzelbot.account_data import account_data
-from wurzelbot.communication.http_communication import http_connection
-from wurzelbot.product.product_data import product_data
+from wurzelbot.account_data import AccountData
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.product.product_data import ProductData
+from wurzelbot.utils.singelton_type import SingletonType
 
 GARDEN_WIDTH = 17
 GARDEN_HEIGHT = 12
@@ -96,7 +97,7 @@ class Tile:
             crop = WeedCrop(crop_id, float(tile_data[6]), size, tile_list)
         else:
             # product on tile
-            product = product_data.get_product_by_id(crop_id)
+            product = ProductData().get_product_by_id(crop_id)
             if product.is_plant():
                 # plant on tile
                 crop = PlantCrop(product, int(tile_data[3]), int(tile_data[4]), size, int(tile_data[10]), tile_list)
@@ -188,7 +189,7 @@ class Garden:
         return len(self.get_empty_tiles()) > 0
 
     def update_garden(self):
-        garden_data = http_connection.get_garden_data(self.garden_id)
+        garden_data = HTTPConnection().get_garden_data(self.garden_id)
         for tile_id, tile_data in garden_data['garden'].items():
             self.garden_field.update_tile(tile_id, tile_data)
 
@@ -209,7 +210,7 @@ class Garden:
         tiles = self.get_tiles_to_be_watered()
         for tile in tiles:
             tile_ids = [tile.tile_id for tile in tile.crop.tiles]
-            http_connection.water_plant_in_garden(self.garden_id, tile.tile_id, tile_ids)
+            HTTPConnection().water_plant_in_garden(self.garden_id, tile.tile_id, tile_ids)
 
         logging.info('{} plants have been watered in normal garden {}'.format(len(tiles), self.garden_id))
         self.update_garden()
@@ -218,7 +219,7 @@ class Garden:
         """
         Erntet alles im Garten.
         """
-        http_connection.harvest_garden(self.garden_id)
+        HTTPConnection().harvest_garden(self.garden_id)
         self.update_garden()
 
 
@@ -231,12 +232,12 @@ class AquaGarden(Garden):
         """
         Alle Pflanzen im Wassergarten werden bewässert.
         """
-        plants = http_connection.get_plants_to_water_in_aqua_garden()
+        plants = HTTPConnection().get_plants_to_water_in_aqua_garden()
         nPlants = len(plants['fieldID'])
         for i in range(0, nPlants):
             sFields = self._getAllFieldIDsFromFieldIDAndSizeAsString(plants['fieldID'][i], plants['sx'][i],
                                                                      plants['sy'][i])
-            http_connection.water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
+            HTTPConnection().water_plant_in_aqua_garden(plants['fieldID'][i], sFields)
 
         logging.info('Im Wassergarten wurden ' + str(nPlants) + ' Pflanzen gegossen.')
 
@@ -244,10 +245,10 @@ class AquaGarden(Garden):
         """
         Erntet alles im Wassergarten.
         """
-        http_connection.harvest_aqua_garden()
+        HTTPConnection().harvest_aqua_garden()
 
 
-class GardenManager:
+class GardenManager(metaclass=SingletonType):
     def __init__(self):
         self.gardens = []
         self.aqua_garden = None
@@ -257,13 +258,13 @@ class GardenManager:
         Ermittelt die Anzahl der Gärten und initialisiert alle.
         """
         self.gardens = []
-        tmp_number_of_gardens = account_data.number_of_gardens
+        tmp_number_of_gardens = AccountData().number_of_gardens
         for i in range(1, tmp_number_of_gardens + 1):
             garden = Garden(i)
             self.gardens.append(garden)
             garden.update_garden()
 
-        if account_data.aqua_garden_available is True:
+        if AccountData().aqua_garden_available is True:
             self.aqua_garden = AquaGarden()
 
     def get_garden_by_id(self, garden_id):
@@ -313,6 +314,3 @@ class GardenManager:
     def update_all(self):
         for garden in self.gardens:
             garden.update_garden()
-
-
-garden_manager = GardenManager()

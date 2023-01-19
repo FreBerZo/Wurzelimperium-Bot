@@ -1,13 +1,13 @@
 import math
 
-from wurzelbot.account_data import account_data
-from wurzelbot.gardens.gardener import gardener
-from wurzelbot.gardens.gardens import garden_manager
-from wurzelbot.product.storage import storage
-from wurzelbot.reservation.reservation import reservation_manager, Resource
+from wurzelbot.account_data import AccountData
+from wurzelbot.gardens.gardener import Gardener
+from wurzelbot.gardens.gardens import GardenManager
+from wurzelbot.product.storage import Storage
+from wurzelbot.reservation.reservation import ReservationManager, Resource
 from wurzelbot.reservation.reservator import Reservator
-from wurzelbot.trading.market import market
-from wurzelbot.trading.trader import trader
+from wurzelbot.trading.market import Market
+from wurzelbot.trading.trader import Trader
 from .abstract_objectives import SubObjective
 
 
@@ -45,28 +45,28 @@ class FarmMoney(SubObjective):
         if self.amount == -1:
             return False
         if self.consider_min_quantity:
-            return account_data.money >= self.amount + market.min_money()
-        return account_data.money >= self.amount
+            return AccountData().money >= self.amount + Market().min_money()
+        return AccountData().money >= self.amount
 
     def finish(self):
         if self.plant is not None:
-            reservation_manager.free_reservation(self, Resource.PLANT, self.plant)
+            ReservationManager().free_reservation(self, Resource.PLANT, self.plant)
         if self.prev_plant is not None:
-            reservation_manager.free_reservation(self, Resource.PLANT, self.prev_plant)
+            ReservationManager().free_reservation(self, Resource.PLANT, self.prev_plant)
         if self.fallback_plant is not None:
-            reservation_manager.free_reservation(self, Resource.PLANT, self.fallback_plant)
+            ReservationManager().free_reservation(self, Resource.PLANT, self.fallback_plant)
         if self.prev_fallback_plant is not None:
-            reservation_manager.free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
-        reservation_manager.free_reservation(self, Resource.TILE)
+            ReservationManager().free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
+        ReservationManager().free_reservation(self, Resource.TILE)
         return True
 
     # TODO: find out why why this sub objective does not plant after buying
     def get_work_reservations(self):
         # TODO: this should be changed if wimp serving is added
-        if len(garden_manager.get_empty_tiles()) == 0:
+        if len(GardenManager().get_empty_tiles()) == 0:
             return False
 
-        plants_ordered_by_profitability = market.get_products_ordered_by_profitability()
+        plants_ordered_by_profitability = Market().get_products_ordered_by_profitability()
         most_profitable_plant = plants_ordered_by_profitability[0]
         plants_ordered_by_profitability.remove(most_profitable_plant)
 
@@ -74,48 +74,48 @@ class FarmMoney(SubObjective):
             self.plant = most_profitable_plant
         if self.plant != most_profitable_plant:
             if self.prev_plant is not None:
-                reservation_manager.free_reservation(self, Resource.PLANT, self.prev_plant)
+                ReservationManager().free_reservation(self, Resource.PLANT, self.prev_plant)
             self.prev_plant = self.plant
             self.plant = most_profitable_plant
 
         for product in plants_ordered_by_profitability:
-            if storage.has_potential_min_quantity_for(product):
+            if Storage().has_potential_min_quantity_for(product):
                 if self.fallback_plant is None:
                     self.fallback_plant = product
                 if self.fallback_plant != product:
                     if self.prev_fallback_plant is not None:
-                        reservation_manager.free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
+                        ReservationManager().free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
                     self.prev_fallback_plant = self.fallback_plant
                     self.fallback_plant = product
                 break
         if self.fallback_plant is None:
-            self.fallback_plant = gardener.get_potential_plants()[-1]
+            self.fallback_plant = Gardener().get_potential_plants()[-1]
 
-        if storage.get_stock_from_product(self.plant) < len(garden_manager.get_empty_tiles()):
+        if Storage().get_stock_from_product(self.plant) < len(GardenManager().get_empty_tiles()):
             # TODO: replace this with provide plant and implement money priority in provide plant
             with Reservator(self, Resource.MONEY, -1) as reserved_money_quantity:
                 if reserved_money_quantity > 0:
-                    reserved_money_quantity += round(market.min_money() / 2, 2)
-                    buy_quantity = len(garden_manager.get_empty_tiles()) - storage.get_stock_from_product(self.plant)
-                    trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
+                    reserved_money_quantity += round(Market().min_money() / 2, 2)
+                    buy_quantity = len(GardenManager().get_empty_tiles()) - Storage().get_stock_from_product(self.plant)
+                    Trader().buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
                 else:
                     # this doesn't need reservation as it uses the min money amount to buy the most profitable plant
-                    trader.buy_cheapest_of(self.plant, 4, round(account_data.money / 2, 2))
+                    Trader().buy_cheapest_of(self.plant, 4, round(AccountData().money / 2, 2))
 
-        self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.plant)
+        self.usable_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.plant)
         if self.prev_plant is not None:
-            self.usable_prev_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.prev_plant)
+            self.usable_prev_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.prev_plant)
         else:
             self.usable_prev_plant_quantity = 0
-        self.usable_fallback_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1, self.fallback_plant)
+        self.usable_fallback_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.fallback_plant)
         if self.prev_fallback_plant is not None:
-            self.usable_prev_fallback_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, -1,
+            self.usable_prev_fallback_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1,
                                                                                    self.prev_fallback_plant)
         else:
             self.usable_prev_fallback_plant_quantity = 0
         if self.usable_plant_quantity == 0 and self.usable_fallback_plant_quantity == 0:
             return 0
-        self.usable_tile_quantity = reservation_manager.reserve(
+        self.usable_tile_quantity = ReservationManager().reserve(
             self, Resource.TILE, self.usable_plant_quantity + self.usable_fallback_plant_quantity)
         return self.usable_tile_quantity != 0
 
@@ -126,32 +126,32 @@ class FarmMoney(SubObjective):
 
         # second method of money making: normal garden farming and selling to market
 
-        planted_plant = gardener.plant(self.plant, min(self.usable_tile_quantity, self.usable_plant_quantity))
+        planted_plant = Gardener().plant(self.plant, min(self.usable_tile_quantity, self.usable_plant_quantity))
         self.usable_tile_quantity -= planted_plant
-        planted_fallback_plant = gardener.plant(self.fallback_plant,
+        planted_fallback_plant = Gardener().plant(self.fallback_plant,
                                                 min(self.usable_tile_quantity, self.usable_fallback_plant_quantity))
 
         # TODO: size of plant should be considered
-        sell_amount = self.usable_plant_quantity - garden_manager.get_num_of_plantable_tiles()
+        sell_amount = self.usable_plant_quantity - GardenManager().get_num_of_plantable_tiles()
         if sell_amount > 0:
-            trader.sell(self.plant, sell_amount)
+            Trader().sell(self.plant, sell_amount)
         sell_amount = self.usable_fallback_plant_quantity - planted_fallback_plant
         if sell_amount > 0:
-            trader.sell(self.fallback_plant, sell_amount)
+            Trader().sell(self.fallback_plant, sell_amount)
         if self.prev_plant is not None:
-            trader.sell(self.prev_plant, self.usable_prev_plant_quantity)
+            Trader().sell(self.prev_plant, self.usable_prev_plant_quantity)
         if self.prev_fallback_plant is not None:
-            trader.sell(self.prev_fallback_plant, self.usable_prev_fallback_plant_quantity)
+            Trader().sell(self.prev_fallback_plant, self.usable_prev_fallback_plant_quantity)
 
         if self.prev_plant is not None:
-            box = storage.get_box_for_product(self.prev_plant)
-            if box is None or box.min_quantity() + market.min_sell_quantity() > box.potential_quantity():
-                reservation_manager.free_reservation(self, Resource.PLANT, self.prev_plant)
+            box = Storage().get_box_for_product(self.prev_plant)
+            if box is None or box.min_quantity() + Market().min_sell_quantity() > box.potential_quantity():
+                ReservationManager().free_reservation(self, Resource.PLANT, self.prev_plant)
                 self.prev_plant = None
         if self.prev_fallback_plant is not None:
-            box = storage.get_box_for_product(self.prev_fallback_plant)
-            if box is None or box.min_quantity() + market.min_sell_quantity() > box.potential_quantity():
-                reservation_manager.free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
+            box = Storage().get_box_for_product(self.prev_fallback_plant)
+            if box is None or box.min_quantity() + Market().min_sell_quantity() > box.potential_quantity():
+                ReservationManager().free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
                 self.prev_fallback_plant = None
 
 
@@ -169,7 +169,7 @@ class FarmPlant(SubObjective):
         self.usable_tile_quantity = 0
         self.missing_amount = 0
 
-        if storage.get_potential_stock_from_product(self.plant) == 0:
+        if Storage().get_potential_stock_from_product(self.plant) == 0:
             self.sub_objectives.append(ProvidePlant(self.priority, self.plant))
 
     def __str__(self):
@@ -181,7 +181,7 @@ class FarmPlant(SubObjective):
         return self.quantity
 
     def get_reservations(self):
-        self.usable_plant_quantity = reservation_manager.reserve(self, Resource.PLANT, self.reach_quantity(),
+        self.usable_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, self.reach_quantity(),
                                                                  self.plant)
         return self.usable_plant_quantity != 0
 
@@ -189,26 +189,26 @@ class FarmPlant(SubObjective):
         return self.usable_plant_quantity >= self.reach_quantity()
 
     def finish(self):
-        reservation_manager.free_reservation(self, Resource.PLANT, self.plant)
-        reservation_manager.free_reservation(self, Resource.TILE)
+        ReservationManager().free_reservation(self, Resource.PLANT, self.plant)
+        ReservationManager().free_reservation(self, Resource.TILE)
         return True
 
     def get_work_reservations(self):
-        if len(garden_manager.get_empty_tiles()) == 0:
+        if len(GardenManager().get_empty_tiles()) == 0:
             return False
 
-        missing_amount = self.reach_quantity() - gardener.get_potential_quantity_of(self.plant)
+        missing_amount = self.reach_quantity() - Gardener().get_potential_quantity_of(self.plant)
         if missing_amount <= 0:
             self.usable_tile_quantity = 0
             return False
         tile_amount = math.ceil(missing_amount / (self.plant.harvest_quantity - 1))
         if self.usable_plant_quantity < tile_amount:
             tile_amount = self.usable_plant_quantity
-        self.usable_tile_quantity = reservation_manager.reserve(self, Resource.TILE, tile_amount)
+        self.usable_tile_quantity = ReservationManager().reserve(self, Resource.TILE, tile_amount)
         return self.usable_tile_quantity != 0
 
     def work(self):
-        gardener.plant(self.plant, self.usable_tile_quantity)
+        Gardener().plant(self.plant, self.usable_tile_quantity)
 
 
 class ProvidePlant(SubObjective):
@@ -228,16 +228,16 @@ class ProvidePlant(SubObjective):
         return f"{self.__class__.__name__}(priority={self.priority}, product={self.product}, quantity={self.quantity})"
 
     def is_reached(self):
-        return account_data.money - market.min_money() >= self.product.price_npc * self.quantity
+        return AccountData().money - Market().min_money() >= self.product.price_npc * self.quantity
 
     def get_finish_reservations(self):
-        self.usable_money_quantity = reservation_manager.reserve(self, Resource.MONEY,
-                                                                 self.product.price_npc * self.quantity)
+        self.usable_money_quantity = ReservationManager().reserve(self, Resource.MONEY,
+                                                                  self.product.price_npc * self.quantity)
         return self.usable_money_quantity != 0
 
     def finish(self):
-        trader.buy_cheapest_of(self.product, self.quantity, self.usable_money_quantity)
-        reservation_manager.free_reservation(self, Resource.MONEY)
+        Trader().buy_cheapest_of(self.product, self.quantity, self.usable_money_quantity)
+        ReservationManager().free_reservation(self, Resource.MONEY)
         return True
 
     def work(self):

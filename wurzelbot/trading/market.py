@@ -1,37 +1,39 @@
 import datetime
 
-from wurzelbot.communication.http_communication import http_connection
-from wurzelbot.gardens.gardens import garden_manager
-from wurzelbot.product.product_data import product_data
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.gardens import GardenManager
+from wurzelbot.product.product_data import ProductData
 from wurzelbot.utils import cache
+from wurzelbot.utils.singelton_type import SingletonType
 
 
-class Market:
+class Market(metaclass=SingletonType):
     """Data collection for every place where trading is done"""
 
     def __init__(self):
         self.wimp_data = {}
 
     def load_wimp_data(self):
-        for garden in garden_manager.gardens:
-            self.wimp_data.update({garden.garden_id: http_connection.get_wimps_data(garden.garden_id)})
+        for garden in GardenManager().gardens:
+            self.wimp_data.update({garden.garden_id: HTTPConnection().get_wimps_data(garden.garden_id)})
 
     # @cache(86400)
     def get_products_ordered_by_profitability(self):
         product_wins = []
-        for product in product_data.get_tradable_plants():
+        for product in ProductData().get_tradable_plants():
             product_wins.append((product, self.relative_win_for(product)))
 
         return [item[0] for item in sorted(product_wins, key=lambda item: item[1], reverse=True)]
 
     @cache(86400)
     def min_money(self):
-        return garden_manager.get_num_of_plantable_tiles() * self.get_sell_price_for(self.get_most_profitable_product())
+        return GardenManager().get_num_of_plantable_tiles() * self.get_sell_price_for(
+            self.get_most_profitable_product())
 
     @cache(86400)
     def min_sell_quantity(self):
         # TODO: how about min sell quantity per product: amount is how much can be farmed in one day
-        return garden_manager.get_num_of_plantable_tiles() * (self.get_most_profitable_product().harvest_quantity - 1)
+        return GardenManager().get_num_of_plantable_tiles() * (self.get_most_profitable_product().harvest_quantity - 1)
 
     def get_most_profitable_product(self):
         return self.get_products_ordered_by_profitability()[0]
@@ -72,8 +74,5 @@ class Market:
         if product.is_tradable:
             # TODO: this should be cached
             # TODO: somehow exclude own offers
-            return http_connection.get_offers_from_product(product.id)
+            return HTTPConnection().get_offers_from_product(product.id)
         return []
-
-
-market = Market()

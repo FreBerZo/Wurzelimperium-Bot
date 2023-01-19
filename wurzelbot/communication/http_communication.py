@@ -18,6 +18,7 @@ import yaml
 from bs4 import BeautifulSoup
 from lxml import html, etree
 
+from wurzelbot.utils.singelton_type import SingletonType
 from .session import Session
 
 # Defines
@@ -26,7 +27,7 @@ HTTP_STATE_FOUND = 302  # moved temporarily
 SERVER_DOMAIN = 'wurzelimperium.de'
 
 
-class HTTPConnection(object):
+class HTTPConnection(metaclass=SingletonType):
     """Mit der Klasse HTTPConnection werden alle anfallenden HTTP-Verbindungen verarbeitet."""
 
     def __init__(self):
@@ -1016,6 +1017,3 @@ class YAMLError(Exception):
 
     def __str__(self):
         return repr(self.value)
-
-
-http_connection = HTTPConnection()

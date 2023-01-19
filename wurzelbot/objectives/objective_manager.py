@@ -1,8 +1,9 @@
 import datetime
 import logging
 
-from wurzelbot.communication.http_communication import http_connection
-from wurzelbot.gardens.gardens import garden_manager, WeedCrop
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.gardens import GardenManager, WeedCrop
+from wurzelbot.utils.singelton_type import SingletonType
 from .main_objectives import FarmMoneyMain, RemoveWeed, BigQuest
 
 
@@ -13,7 +14,7 @@ from .main_objectives import FarmMoneyMain, RemoveWeed, BigQuest
 #  (e.g. if no plants could be reserved tiles are not required)
 
 
-class ObjectiveManager:
+class ObjectiveManager(metaclass=SingletonType):
     def __init__(self):
         self.objectives = []
 
@@ -22,17 +23,17 @@ class ObjectiveManager:
         if self.get_objective_of_class(FarmMoneyMain) is None:
             self.objectives.append(FarmMoneyMain(10))
 
-        weed_crops = sorted(garden_manager.get_crops_flat_from_class(WeedCrop), key=lambda crop: crop.remove_cost)
+        weed_crops = sorted(GardenManager().get_crops_flat_from_class(WeedCrop), key=lambda crop: crop.remove_cost)
         if self.get_objective_of_class(RemoveWeed) is None and len(weed_crops) > 0:
             self.objectives.append(RemoveWeed(1, weed_crops[0]))
 
-        garden_info = http_connection.get_garden_info()
+        garden_info = HTTPConnection().get_garden_info()
         if not garden_info == 0:
             pass
 
         # big quest (monthly limited quest) starts with level 1?
         year_id = datetime.datetime.now().year - 2019
-        big_quest_data = http_connection.get_big_quest_data(year_id)
+        big_quest_data = HTTPConnection().get_big_quest_data(year_id)
         current_quest_id = int(big_quest_data['current'])
         current_quest_data = big_quest_data['data']['quests'][str(current_quest_id)]
         if not current_quest_data.get('done'):
@@ -61,6 +62,3 @@ class ObjectiveManager:
                 self.objectives.remove(objective)
                 objective_finished = True
         return objective_finished
-
-
-objective_manager = ObjectiveManager()

@@ -8,16 +8,16 @@ import logging
 import sys
 import time
 
-from wurzelbot.account_data import account_data, Login
-from wurzelbot.collector import collector
-from wurzelbot.communication.http_communication import http_connection
-from wurzelbot.gardens.gardener import gardener
-from wurzelbot.gardens.gardens import garden_manager
-from wurzelbot.objectives.objective_manager import objective_manager
-from wurzelbot.product.product_data import product_data
-from wurzelbot.product.storage import storage
-from wurzelbot.trading.market import market
-from wurzelbot.trading.trader import trader
+from wurzelbot.account_data import AccountData, Login
+from wurzelbot.collector import Collector
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.gardener import Gardener
+from wurzelbot.gardens.gardens import GardenManager
+from wurzelbot.objectives.objective_manager import ObjectiveManager
+from wurzelbot.product.product_data import ProductData
+from wurzelbot.product.storage import Storage
+from wurzelbot.trading.market import Market
+from wurzelbot.trading.trader import Trader
 
 
 class WurzelBot:
@@ -42,31 +42,32 @@ class WurzelBot:
         login_data = Login(server=self.server, user=self.user_name, password=self.password)
 
         # TODO: login can fail, because wurzelimperium servers restart daily
-        http_connection.log_in(login_data)
+        HTTPConnection().log_in(login_data)
         logging.debug('login successfull')
         logging.debug('loading data...')
 
-        account_data.load_user_data()
+        AccountData().load_user_data()
 
-        account_data.load_stats()
+        AccountData().load_stats()
 
-        account_data.load_garden_availability()
+        AccountData().load_garden_availability()
 
-        product_data.init_products()
+        ProductData().init_products()
 
-        garden_manager.init_gardens()
+        GardenManager().init_gardens()
 
-        account_data.account_login = login_data
-        storage.load_storage(efficient_load=False)
-        market.load_wimp_data()
+        # TODO: change this
+        AccountData().account_login = login_data
+        Storage().load_storage(efficient_load=False)
+        Market().load_wimp_data()
         logging.debug('loading successfull')
 
     def exit_bot(self):
         """
         Diese Methode beendet den Wurzelbot geordnet und setzt alles zurück.
         """
-        if http_connection.logged_in:
-            http_connection.log_out()
+        if HTTPConnection().logged_in:
+            HTTPConnection().log_out()
             logging.info('logout successfull')
 
     def send_termination(self, *args):
@@ -87,7 +88,7 @@ class WurzelBot:
     # TODO: make a new class of this. optimize loading: not everything requires to be loaded again.
     #  add scheduling when the bot should be woken up
     def sleep_bot_until_next_action(self):
-        sleep_time = garden_manager.get_earliest_required_action() - int(time.time())
+        sleep_time = GardenManager().get_earliest_required_action() - int(time.time())
         if sleep_time <= 0:
             return
         self.exit_bot()
@@ -101,24 +102,24 @@ class WurzelBot:
         while True:
             self.check_termination()
 
-            collector.collect_daily_login_bonus()
+            Collector().collect_daily_login_bonus()
 
             self.check_termination()
 
-            gardener.harvest()
+            Gardener().harvest()
 
             self.check_termination()
 
             objective_finished = True
             while objective_finished:
-                objective_manager.create_objectives()
+                ObjectiveManager().create_objectives()
                 self.check_termination()
-                objective_finished = objective_manager.run_objectives()
+                objective_finished = ObjectiveManager().run_objectives()
                 self.check_termination()
 
             self.check_termination()
 
-            gardener.water()
+            Gardener().water()
 
             # trader.reject_bad_wimp_offers()
 
@@ -128,25 +129,25 @@ class WurzelBot:
 
     def auto_plant(self):
         while True:
-            collector.collect_daily_login_bonus()
-            gardener.harvest()
-            if garden_manager.has_empty_tiles():
-                storage.print()
-                while garden_manager.has_empty_tiles():
-                    stock = gardener.get_potential_plants()
+            Collector().collect_daily_login_bonus()
+            Gardener().harvest()
+            if GardenManager().has_empty_tiles():
+                Storage().print()
+                while GardenManager().has_empty_tiles():
+                    stock = Gardener().get_potential_plants()
                     if len(stock) == 0:
                         logging.info("Das Lager ist leer.")
                         break
                     plant = None
                     for product in stock:
-                        if garden_manager.can_be_planted_now(product) and product.name != "Weihnachtskaktus":
+                        if GardenManager().can_be_planted_now(product) and product.name != "Weihnachtskaktus":
                             plant = product
                             break
                     if plant is None:
                         break
-                    gardener.plant(plant)
-            gardener.water()
+                    Gardener().plant(plant)
+            Gardener().water()
 
-            trader.reject_bad_wimp_offers()
+            Trader().reject_bad_wimp_offers()
 
             self.sleep_bot_until_next_action()

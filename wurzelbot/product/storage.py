@@ -1,8 +1,9 @@
 import time
 from enum import Enum
 
-from wurzelbot.communication.http_communication import http_connection
-from .product_data import product_data, ProductType
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.utils.singelton_type import SingletonType
+from .product_data import ProductData, ProductType
 
 
 class ShelfType(Enum):
@@ -40,9 +41,10 @@ class Box:
     def is_empty(self):
         return self.quantity <= 0
 
+    # TODO: fix this import
     def potential_quantity(self):
-        from wurzelbot.gardens.gardener import gardener
-        return gardener.get_potential_quantity_of(self.product)
+        from wurzelbot.gardens.gardener import Gardener
+        return Gardener().get_potential_quantity_of(self.product)
 
     def min_quantity(self):
         return self.product.min_quantity()
@@ -103,7 +105,7 @@ class Shelf:
 
     def load_shelf(self, data=None):
         if data is None:
-            data = http_connection.get_inventory(self.shelf_type.value)
+            data = HTTPConnection().get_inventory(self.shelf_type.value)
             self.num_pages = int(data['regalzahl'])
             self.max_pages = int(data['maxRegale'])
 
@@ -113,11 +115,11 @@ class Shelf:
 
         if len(self.boxes) == 0:
             for product_id, quantity in inventory.items():
-                self.boxes.append(Box(product_data.get_product_by_id(product_id), quantity))
+                self.boxes.append(Box(ProductData().get_product_by_id(product_id), quantity))
         else:
             new_boxes = []
             for product_id, quantity in inventory.items():
-                product = product_data.get_product_by_id(product_id)
+                product = ProductData().get_product_by_id(product_id)
                 box = self.get_box_for_product(product)
                 if box is None:
                     box = Box(product, quantity)
@@ -127,7 +129,7 @@ class Shelf:
             self.boxes = new_boxes
 
 
-class Storage:
+class Storage(metaclass=SingletonType):
 
     def __init__(self):
         self.shelves = [
@@ -148,7 +150,7 @@ class Storage:
         for shelf in self.shelves:
             if efficient_load:
                 if inventory is None:
-                    inventory = http_connection.get_inventory(ShelfType.NORMAL.value)
+                    inventory = HTTPConnection().get_inventory(ShelfType.NORMAL.value)
                 shelf.load_shelf(inventory)
             else:
                 shelf.load_shelf()
@@ -204,9 +206,10 @@ class Storage:
             return 0
         return box.quantity
 
+    # TODO: fix this import
     def get_potential_stock_from_product(self, product):
-        from wurzelbot.gardens.gardener import gardener
-        return gardener.get_potential_quantity_of(product)
+        from wurzelbot.gardens.gardener import Gardener
+        return Gardener().get_potential_quantity_of(product)
 
     def has_potential_min_quantity_for(self, product):
         box = self.get_box_for_product(product)
@@ -241,6 +244,3 @@ class Storage:
             print("\n".join(lines))
         else:
             print('Your stock is empty')
-
-
-storage = Storage()

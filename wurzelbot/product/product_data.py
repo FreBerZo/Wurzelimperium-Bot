@@ -7,8 +7,9 @@ Created on 23.05.2019
 import json
 from enum import Enum
 
-from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.communication.http_communication import HTTPConnection
 from wurzelbot.trading.shop import Shop
+from wurzelbot.utils.singelton_type import SingletonType
 
 
 class ProductType(Enum):
@@ -50,10 +51,11 @@ class Product:
     def is_decoration(self):
         return self.product_type == ProductType.DECORATION
 
+    # TODO: resolve this import
     def min_quantity(self):
         if self.is_plant():
-            from wurzelbot.gardens.gardens import garden_manager
-            return int(garden_manager.get_num_of_plantable_tiles() / (self.size[0] * self.size[1]))
+            from wurzelbot.gardens.gardens import GardenManager
+            return int(GardenManager().get_num_of_plantable_tiles() / (self.size[0] * self.size[1]))
         return 0
 
     def print_all(self):
@@ -68,7 +70,7 @@ class Product:
               'Size:', str(xstr(self.size)), ' ')
 
 
-class ProductData:
+class ProductData(metaclass=SingletonType):
 
     def __init__(self):
         self.__products = []
@@ -77,7 +79,7 @@ class ProductData:
         """
         Ermittelt alle möglichen NPC Preise und setzt diese in den Produkten.
         """
-        npc_prices = http_connection.get_npc_prices()
+        npc_prices = HTTPConnection().get_npc_prices()
         for product in self.__products:
             if product.name in npc_prices.keys():
                 product.price_npc = npc_prices[product.name]
@@ -87,7 +89,7 @@ class ProductData:
         coins.price_npc = float(300)
 
     def load_tradable_products(self):
-        for product_id in http_connection.get_all_tradeable_products_from_overview():
+        for product_id in HTTPConnection().get_all_tradeable_products_from_overview():
             self.get_product_by_id(product_id).is_tradable = True
 
     def load_shops(self):
@@ -95,7 +97,7 @@ class ProductData:
         shops = [Shop.TREE, Shop.FARM, Shop.DECORATION]
 
         for shop in shops:
-            product_ids = http_connection.get_product_ids_from_shop(shop.value)
+            product_ids = HTTPConnection().get_product_ids_from_shop(shop.value)
             for product_id in product_ids:
                 self.get_product_by_id(product_id).buy_in_shop = shop
 
@@ -125,7 +127,7 @@ class ProductData:
         """
         Initialisiert alle Produkte.
         """
-        products = dict(json.loads(http_connection.get_all_product_informations()))
+        products = dict(json.loads(HTTPConnection().get_all_product_informations()))
         # Nicht genutzte Attribute: img, imgPhase, fileext, clear, edge, pieces, speedup_cooldown in Kategorie z
         for key in sorted(products.keys()):
             # 999 ist nur ein Testeintrag und wird nicht benötigt.
@@ -157,6 +159,3 @@ class ProductData:
                 continue
 
             product.print_all()
-
-
-product_data = ProductData()

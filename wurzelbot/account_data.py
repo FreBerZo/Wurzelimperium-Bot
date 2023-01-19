@@ -5,12 +5,13 @@ Created on 21.03.2017
 import re
 from collections import namedtuple
 
-from wurzelbot.communication.http_communication import http_connection
+from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.utils.singelton_type import SingletonType
 
 Login = namedtuple('Login', 'server user password')
 
 
-class AccountData:
+class AccountData(metaclass=SingletonType):
     """
     Diese Daten-Klasse enthält alle wichtigen Informationen über den Spieler.
     """
@@ -40,15 +41,15 @@ class AccountData:
     saguaro_quests_completed = None
 
     def load_garden_availability(self):
-        account_data.honey_farm_available = http_connection.is_honey_farm_available(account_data.level)
+        AccountData().honey_farm_available = HTTPConnection().is_honey_farm_available(AccountData().level)
 
-        account_data.aqua_garden_available = http_connection.is_aqua_garden_available(account_data.level)
+        AccountData().aqua_garden_available = HTTPConnection().is_aqua_garden_available(AccountData().level)
 
     def load_user_data(self):
         """
         Liest den Spielerdaten vom Server und speichert sie in der Klasse.
         """
-        user_data = http_connection.read_user_data_from_server()
+        user_data = HTTPConnection().read_user_data_from_server()
 
         self.user_name = user_data['uname']
         self.money = float(user_data['bar_unformat'])
@@ -60,7 +61,7 @@ class AccountData:
         self.daily_login_bonus = user_data['dailyloginbonus']
 
     def load_stats(self):
-        stats = http_connection.get_stats()['table']
+        stats = HTTPConnection().get_stats()['table']
         mapping = {
             'user_id': (1, int),
             'quests_completed': (5, int),
@@ -78,6 +79,3 @@ class AccountData:
             i, var_type = value
             stat_value = var_type(re.findall(r'<td>(.*?)</td>', stats[i])[1].replace(r'&nbsp;', ''))
             setattr(self, key, stat_value)
-
-
-account_data = AccountData()

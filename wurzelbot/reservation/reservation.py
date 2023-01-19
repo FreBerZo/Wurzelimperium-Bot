@@ -1,10 +1,11 @@
 from enum import Enum
 
-from wurzelbot.account_data import account_data
-from wurzelbot.gardens.gardener import gardener
-from wurzelbot.gardens.gardens import garden_manager
-from wurzelbot.product.storage import storage
-from wurzelbot.trading.market import market
+from wurzelbot.account_data import AccountData
+from wurzelbot.gardens.gardener import Gardener
+from wurzelbot.gardens.gardens import GardenManager
+from wurzelbot.product.storage import Storage
+from wurzelbot.trading.market import Market
+from wurzelbot.utils.singelton_type import SingletonType
 
 
 class Resource(Enum):
@@ -31,7 +32,7 @@ class Reservation:
 # TODO: IDEA: add difference between requested quantity and received quantity
 # TODO: IDEA: add difference between shared reservation and normal reservation
 
-class ReservationManager:
+class ReservationManager(metaclass=SingletonType):
     def __init__(self):
         self.reservations = {
             Resource.PLANT.value: [],
@@ -75,13 +76,13 @@ class ReservationManager:
                 already_reserved_amount += reservation.quantity
 
         if resource == Resource.PLANT:
-            theoretical_available_quantity = gardener.get_potential_quantity_of(plant)
-            actual_available_quantity = storage.get_stock_from_product(plant)
+            theoretical_available_quantity = Gardener().get_potential_quantity_of(plant)
+            actual_available_quantity = Storage().get_stock_from_product(plant)
         elif resource == Resource.TILE:
-            theoretical_available_quantity = garden_manager.get_num_of_plantable_tiles()
-            actual_available_quantity = len(garden_manager.get_empty_tiles())
+            theoretical_available_quantity = GardenManager().get_num_of_plantable_tiles()
+            actual_available_quantity = len(GardenManager().get_empty_tiles())
         else:
-            theoretical_available_quantity = account_data.money - market.min_money()
+            theoretical_available_quantity = AccountData().money - Market().min_money()
             actual_available_quantity = theoretical_available_quantity
 
         requested_quantity = existing_reservation.quantity
@@ -100,6 +101,3 @@ class ReservationManager:
             return
 
         self.reservations.get(resource.value).remove(existing_reservation)
-
-
-reservation_manager = ReservationManager()
