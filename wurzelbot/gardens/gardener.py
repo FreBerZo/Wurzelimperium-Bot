@@ -28,6 +28,15 @@ class Gardener:
                     storage_box.quantity += planted_box.quantity * planted_box.product.harvest_quantity
         return [box.product for box in sorted(boxes)]
 
+    def get_num_of_planted_plants(self):
+        products = {}
+        for crop in garden_manager.get_crops_flat_from_class(PlantCrop):
+            if crop.product in products.keys():
+                products[crop.product] += 1
+            else:
+                products[crop.product] = 1
+        return [Box(product, quantity) for product, quantity in products.items()]
+
     def plant(self, product, amount=-1):
         if not product.is_plant() or not product.is_plantable:
             return 0

@@ -4,7 +4,7 @@ from wurzelbot.account_data import account_data
 from wurzelbot.gardens.gardener import gardener
 from wurzelbot.gardens.gardens import garden_manager
 from wurzelbot.product.storage import storage
-from wurzelbot.trading.trader import trader
+from wurzelbot.trading.market import market
 
 
 class Resource(Enum):
@@ -81,7 +81,7 @@ class ReservationManager:
             theoretical_available_quantity = garden_manager.get_num_of_plantable_tiles()
             actual_available_quantity = len(garden_manager.get_empty_tiles())
         else:
-            theoretical_available_quantity = account_data.money - trader.min_money()
+            theoretical_available_quantity = account_data.money - market.min_money()
             actual_available_quantity = theoretical_available_quantity
 
         requested_quantity = existing_reservation.quantity

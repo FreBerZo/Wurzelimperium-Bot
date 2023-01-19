@@ -5,8 +5,6 @@ import time
 from wurzelbot.account_data import account_data
 from wurzelbot.communication.http_communication import http_connection
 from wurzelbot.product.product_data import product_data
-# TODO: remove this import
-from wurzelbot.product.storage import Box
 
 GARDEN_WIDTH = 17
 GARDEN_HEIGHT = 12
@@ -213,7 +211,7 @@ class Garden:
             tile_ids = [tile.tile_id for tile in tile.crop.tiles]
             http_connection.water_plant_in_garden(self.garden_id, tile.tile_id, tile_ids)
 
-        logging.info('{} plants have been harvested in normal garden {}'.format(len(tiles), self.garden_id))
+        logging.info('{} plants have been watered in normal garden {}'.format(len(tiles), self.garden_id))
         self.update_garden()
 
     def harvest(self):
@@ -311,15 +309,6 @@ class GardenManager:
 
     def get_crops_flat_from_class(self, crop_class):
         return [crop for garden in self.gardens for crop in garden.get_crops_from_class(crop_class)]
-
-    def get_num_of_planted_plants(self):
-        products = {}
-        for crop in self.get_crops_flat_from_class(PlantCrop):
-            if crop.product in products.keys():
-                products[crop.product] += 1
-            else:
-                products[crop.product] = 1
-        return [Box(product, quantity) for product, quantity in products.items()]
 
     def update_all(self):
         for garden in self.gardens:

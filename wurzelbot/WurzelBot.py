@@ -16,6 +16,7 @@ from wurzelbot.gardens.gardens import garden_manager
 from wurzelbot.objectives.objective_manager import objective_manager
 from wurzelbot.product.product_data import product_data
 from wurzelbot.product.storage import storage
+from wurzelbot.trading.market import market
 from wurzelbot.trading.trader import trader
 
 
@@ -57,7 +58,7 @@ class WurzelBot:
 
         account_data.account_login = login_data
         storage.load_storage(efficient_load=False)
-        trader.load_wimp_data()
+        market.load_wimp_data()
         logging.debug('loading successfull')
 
     def exit_bot(self):
