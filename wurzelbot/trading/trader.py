@@ -8,15 +8,16 @@ import logging
 
 from wurzelbot.account_data import AccountData
 from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.garden_helper import GardenHelper
 from wurzelbot.product.product_data import ProductData
+from wurzelbot.product.product_helper import ProductHelper
 from wurzelbot.product.storage import Storage
-from wurzelbot.utils.singelton_type import SingletonType
 from .market import Market
 
 
-class Trader(metaclass=SingletonType):
-
-    def reject_bad_wimp_offers(self):
+class Trader:
+    @staticmethod
+    def reject_bad_wimp_offers():
         declined_wimps = 0
         for garden_id, offers in Market().wimp_data.items():
             for wimp_id, data in offers.items():
@@ -33,7 +34,8 @@ class Trader(metaclass=SingletonType):
                     HTTPConnection().decline_wimp(wimp_id)
         logging.info(f"declined {declined_wimps} wimp(s)")
 
-    def make_space_in_storage_for_products(self, products):
+    @staticmethod
+    def make_space_in_storage_for_products(products):
         """
         Makes a contract to temporarily move products out of the storage so all products stated in the products
         attribute can be added to the storage. Don't forget to cancel all contracts after adding the desired products.
@@ -74,13 +76,14 @@ class Trader(metaclass=SingletonType):
                       .format(len(trade_products)))
         HTTPConnection().create_contract(AccountData().user_name, trade_products)
 
-    def buy_cheapest_of(self, product, quantity, money=None):
+    @staticmethod
+    def buy_cheapest_of(product, quantity, money=None):
         if money is None:
             money = AccountData().money - Market().min_money()
         if money <= 0:
             return 0
 
-        self.make_space_in_storage_for_products([product])
+        Trader.make_space_in_storage_for_products([product])
 
         buying_protocol = {}
         offers = HTTPConnection().get_cheapest_offers_for(product)
@@ -129,7 +132,8 @@ class Trader(metaclass=SingletonType):
 
         return bought_quantity
 
-    def sell_to_marketplace(self, product, quantity, price):
+    @staticmethod
+    def sell_to_marketplace(product, quantity, price):
         price = round(price, 2)
         HTTPConnection().sell_to_marketplace(product, quantity, price)
 
@@ -139,13 +143,14 @@ class Trader(metaclass=SingletonType):
         Storage().load_storage()
         Storage().use_product(product)
 
-    def sell(self, product, sell_amount=-1):
+    @staticmethod
+    def sell(product, sell_amount=-1):
         real_stock = Storage().get_stock_from_product(product)
         if real_stock == 0:
             return
 
-        potential_stock = Storage().get_potential_stock_from_product(product)
-        min_quantity = Storage().get_box_for_product(product).min_quantity()
+        potential_stock = GardenHelper.get_potential_quantity_of(product)
+        min_quantity = ProductHelper.min_quantity(product)
         potential_sell_amount = potential_stock - min_quantity
         if sell_amount == -1 or sell_amount > potential_sell_amount:
             sell_amount = potential_sell_amount
@@ -160,4 +165,4 @@ class Trader(metaclass=SingletonType):
             sell_amount = int(AccountData().money / (sell_price * 0.1))
             money_problem = True
         if sell_amount > Market().min_sell_quantity() or money_problem:
-            self.sell_to_marketplace(product, sell_amount, sell_price)
+            Trader.sell_to_marketplace(product, sell_amount, sell_price)

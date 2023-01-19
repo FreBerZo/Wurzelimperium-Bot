@@ -1,7 +1,7 @@
 from enum import Enum
 
 from wurzelbot.account_data import AccountData
-from wurzelbot.gardens.gardener import Gardener
+from wurzelbot.gardens.garden_helper import GardenHelper
 from wurzelbot.gardens.gardens import GardenManager
 from wurzelbot.product.storage import Storage
 from wurzelbot.trading.market import Market
@@ -76,7 +76,7 @@ class ReservationManager(metaclass=SingletonType):
                 already_reserved_amount += reservation.quantity
 
         if resource == Resource.PLANT:
-            theoretical_available_quantity = Gardener().get_potential_quantity_of(plant)
+            theoretical_available_quantity = GardenHelper.get_potential_quantity_of(plant)
             actual_available_quantity = Storage().get_stock_from_product(plant)
         elif resource == Resource.TILE:
             theoretical_available_quantity = GardenManager().get_num_of_plantable_tiles()

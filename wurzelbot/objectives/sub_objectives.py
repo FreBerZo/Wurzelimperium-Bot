@@ -1,8 +1,10 @@
 import math
 
 from wurzelbot.account_data import AccountData
+from wurzelbot.gardens.garden_helper import GardenHelper
 from wurzelbot.gardens.gardener import Gardener
 from wurzelbot.gardens.gardens import GardenManager
+from wurzelbot.product.product_helper import ProductHelper
 from wurzelbot.product.storage import Storage
 from wurzelbot.reservation.reservation import ReservationManager, Resource
 from wurzelbot.reservation.reservator import Reservator
@@ -79,7 +81,7 @@ class FarmMoney(SubObjective):
             self.plant = most_profitable_plant
 
         for product in plants_ordered_by_profitability:
-            if Storage().has_potential_min_quantity_for(product):
+            if ProductHelper.is_potential_min_quantity(product):
                 if self.fallback_plant is None:
                     self.fallback_plant = product
                 if self.fallback_plant != product:
@@ -89,7 +91,7 @@ class FarmMoney(SubObjective):
                     self.fallback_plant = product
                 break
         if self.fallback_plant is None:
-            self.fallback_plant = Gardener().get_potential_plants()[-1]
+            self.fallback_plant = GardenHelper.get_potential_plants()[-1]
 
         if Storage().get_stock_from_product(self.plant) < len(GardenManager().get_empty_tiles()):
             # TODO: replace this with provide plant and implement money priority in provide plant
@@ -97,20 +99,21 @@ class FarmMoney(SubObjective):
                 if reserved_money_quantity > 0:
                     reserved_money_quantity += round(Market().min_money() / 2, 2)
                     buy_quantity = len(GardenManager().get_empty_tiles()) - Storage().get_stock_from_product(self.plant)
-                    Trader().buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
+                    Trader.buy_cheapest_of(self.plant, buy_quantity, reserved_money_quantity)
                 else:
                     # this doesn't need reservation as it uses the min money amount to buy the most profitable plant
-                    Trader().buy_cheapest_of(self.plant, 4, round(AccountData().money / 2, 2))
+                    Trader.buy_cheapest_of(self.plant, 4, round(AccountData().money / 2, 2))
 
         self.usable_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.plant)
         if self.prev_plant is not None:
             self.usable_prev_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.prev_plant)
         else:
             self.usable_prev_plant_quantity = 0
-        self.usable_fallback_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1, self.fallback_plant)
+        self.usable_fallback_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1,
+                                                                           self.fallback_plant)
         if self.prev_fallback_plant is not None:
             self.usable_prev_fallback_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, -1,
-                                                                                   self.prev_fallback_plant)
+                                                                                    self.prev_fallback_plant)
         else:
             self.usable_prev_fallback_plant_quantity = 0
         if self.usable_plant_quantity == 0 and self.usable_fallback_plant_quantity == 0:
@@ -126,31 +129,33 @@ class FarmMoney(SubObjective):
 
         # second method of money making: normal garden farming and selling to market
 
-        planted_plant = Gardener().plant(self.plant, min(self.usable_tile_quantity, self.usable_plant_quantity))
+        planted_plant = Gardener.plant(self.plant, min(self.usable_tile_quantity, self.usable_plant_quantity))
         self.usable_tile_quantity -= planted_plant
-        planted_fallback_plant = Gardener().plant(self.fallback_plant,
+        planted_fallback_plant = Gardener.plant(self.fallback_plant,
                                                 min(self.usable_tile_quantity, self.usable_fallback_plant_quantity))
 
         # TODO: size of plant should be considered
         sell_amount = self.usable_plant_quantity - GardenManager().get_num_of_plantable_tiles()
         if sell_amount > 0:
-            Trader().sell(self.plant, sell_amount)
+            Trader.sell(self.plant, sell_amount)
         sell_amount = self.usable_fallback_plant_quantity - planted_fallback_plant
         if sell_amount > 0:
-            Trader().sell(self.fallback_plant, sell_amount)
+            Trader.sell(self.fallback_plant, sell_amount)
         if self.prev_plant is not None:
-            Trader().sell(self.prev_plant, self.usable_prev_plant_quantity)
+            Trader.sell(self.prev_plant, self.usable_prev_plant_quantity)
         if self.prev_fallback_plant is not None:
-            Trader().sell(self.prev_fallback_plant, self.usable_prev_fallback_plant_quantity)
+            Trader.sell(self.prev_fallback_plant, self.usable_prev_fallback_plant_quantity)
 
         if self.prev_plant is not None:
-            box = Storage().get_box_for_product(self.prev_plant)
-            if box is None or box.min_quantity() + Market().min_sell_quantity() > box.potential_quantity():
+            min_quantity = ProductHelper.min_quantity(self.prev_plant)
+            potential_quantity = ProductHelper.potential_quantity(self.prev_plant)
+            if min_quantity + Market().min_sell_quantity() > potential_quantity:
                 ReservationManager().free_reservation(self, Resource.PLANT, self.prev_plant)
                 self.prev_plant = None
         if self.prev_fallback_plant is not None:
-            box = Storage().get_box_for_product(self.prev_fallback_plant)
-            if box is None or box.min_quantity() + Market().min_sell_quantity() > box.potential_quantity():
+            min_quantity = ProductHelper.min_quantity(self.prev_plant)
+            potential_quantity = ProductHelper.potential_quantity(self.prev_plant)
+            if min_quantity + Market().min_sell_quantity() > potential_quantity:
                 ReservationManager().free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
                 self.prev_fallback_plant = None
 
@@ -169,7 +174,7 @@ class FarmPlant(SubObjective):
         self.usable_tile_quantity = 0
         self.missing_amount = 0
 
-        if Storage().get_potential_stock_from_product(self.plant) == 0:
+        if GardenHelper.get_potential_quantity_of(self.plant) == 0:
             self.sub_objectives.append(ProvidePlant(self.priority, self.plant))
 
     def __str__(self):
@@ -177,12 +182,12 @@ class FarmPlant(SubObjective):
 
     def reach_quantity(self):
         if self.consider_min_quantity:
-            return self.plant.min_quantity() + self.quantity
+            return ProductHelper.min_quantity(self.plant) + self.quantity
         return self.quantity
 
     def get_reservations(self):
         self.usable_plant_quantity = ReservationManager().reserve(self, Resource.PLANT, self.reach_quantity(),
-                                                                 self.plant)
+                                                                  self.plant)
         return self.usable_plant_quantity != 0
 
     def is_reached(self):
@@ -197,7 +202,7 @@ class FarmPlant(SubObjective):
         if len(GardenManager().get_empty_tiles()) == 0:
             return False
 
-        missing_amount = self.reach_quantity() - Gardener().get_potential_quantity_of(self.plant)
+        missing_amount = self.reach_quantity() - GardenHelper.get_potential_quantity_of(self.plant)
         if missing_amount <= 0:
             self.usable_tile_quantity = 0
             return False
@@ -208,7 +213,7 @@ class FarmPlant(SubObjective):
         return self.usable_tile_quantity != 0
 
     def work(self):
-        Gardener().plant(self.plant, self.usable_tile_quantity)
+        Gardener.plant(self.plant, self.usable_tile_quantity)
 
 
 class ProvidePlant(SubObjective):
@@ -236,7 +241,7 @@ class ProvidePlant(SubObjective):
         return self.usable_money_quantity != 0
 
     def finish(self):
-        Trader().buy_cheapest_of(self.product, self.quantity, self.usable_money_quantity)
+        Trader.buy_cheapest_of(self.product, self.quantity, self.usable_money_quantity)
         ReservationManager().free_reservation(self, Resource.MONEY)
         return True
 

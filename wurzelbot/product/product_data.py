@@ -51,13 +51,6 @@ class Product:
     def is_decoration(self):
         return self.product_type == ProductType.DECORATION
 
-    # TODO: resolve this import
-    def min_quantity(self):
-        if self.is_plant():
-            from wurzelbot.gardens.gardens import GardenManager
-            return int(GardenManager().get_num_of_plantable_tiles() / (self.size[0] * self.size[1]))
-        return 0
-
     def print_all(self):
         # Show nothing instead of None
         xstr = lambda s: s or ""

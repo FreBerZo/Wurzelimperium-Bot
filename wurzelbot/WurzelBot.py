@@ -11,6 +11,7 @@ import time
 from wurzelbot.account_data import AccountData, Login
 from wurzelbot.collector import Collector
 from wurzelbot.communication.http_communication import HTTPConnection
+from wurzelbot.gardens.garden_helper import GardenHelper
 from wurzelbot.gardens.gardener import Gardener
 from wurzelbot.gardens.gardens import GardenManager
 from wurzelbot.objectives.objective_manager import ObjectiveManager
@@ -106,7 +107,7 @@ class WurzelBot:
 
             self.check_termination()
 
-            Gardener().harvest()
+            Gardener.harvest()
 
             self.check_termination()
 
@@ -119,7 +120,7 @@ class WurzelBot:
 
             self.check_termination()
 
-            Gardener().water()
+            Gardener.water()
 
             # trader.reject_bad_wimp_offers()
 
@@ -130,11 +131,11 @@ class WurzelBot:
     def auto_plant(self):
         while True:
             Collector().collect_daily_login_bonus()
-            Gardener().harvest()
+            Gardener.harvest()
             if GardenManager().has_empty_tiles():
                 Storage().print()
                 while GardenManager().has_empty_tiles():
-                    stock = Gardener().get_potential_plants()
+                    stock = GardenHelper.get_potential_plants()
                     if len(stock) == 0:
                         logging.info("Das Lager ist leer.")
                         break
@@ -145,9 +146,9 @@ class WurzelBot:
                             break
                     if plant is None:
                         break
-                    Gardener().plant(plant)
-            Gardener().water()
+                    Gardener.plant(plant)
+            Gardener.water()
 
-            Trader().reject_bad_wimp_offers()
+            Trader.reject_bad_wimp_offers()
 
             self.sleep_bot_until_next_action()

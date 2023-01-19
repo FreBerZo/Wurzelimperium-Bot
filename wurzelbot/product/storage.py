@@ -41,20 +41,6 @@ class Box:
     def is_empty(self):
         return self.quantity <= 0
 
-    # TODO: fix this import
-    def potential_quantity(self):
-        from wurzelbot.gardens.gardener import Gardener
-        return Gardener().get_potential_quantity_of(self.product)
-
-    def min_quantity(self):
-        return self.product.min_quantity()
-
-    def is_min_quantity(self):
-        return self.min_quantity() <= self.quantity
-
-    def is_potential_min_quantity(self):
-        return self.potential_quantity() >= self.min_quantity()
-
     @staticmethod
     def merge_boxes(boxes1, boxes2):
         merged_boxes = {}
@@ -205,23 +191,6 @@ class Storage(metaclass=SingletonType):
         if box is None:
             return 0
         return box.quantity
-
-    # TODO: fix this import
-    def get_potential_stock_from_product(self, product):
-        from wurzelbot.gardens.gardener import Gardener
-        return Gardener().get_potential_quantity_of(product)
-
-    def has_potential_min_quantity_for(self, product):
-        box = self.get_box_for_product(product)
-        if box is None:
-            return False
-        return self.get_box_for_product(product).is_potential_min_quantity()
-
-    def has_min_quantity_for(self, product):
-        box = self.get_box_for_product(product)
-        if box is None:
-            return False
-        return self.get_box_for_product(product).is_min_quantity()
 
     def get_lowest_box(self, shelf_type=None, product_type=None):
         if self.is_empty(shelf_type, product_type):

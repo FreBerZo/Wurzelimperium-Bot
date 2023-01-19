@@ -42,7 +42,7 @@ class RemoveWeed(MainObjective):
         return self.usable_money_quantity >= self.crop.remove_cost
 
     def finish(self):
-        Gardener().remove_crop(self.crop)
+        Gardener.remove_crop(self.crop)
         return True
 
 
