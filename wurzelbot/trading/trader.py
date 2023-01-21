@@ -164,5 +164,5 @@ class Trader:
         if sell_price * sell_amount * 0.1 > AccountData().money:
             sell_amount = int(AccountData().money / (sell_price * 0.1))
             money_problem = True
-        if sell_amount > Market().min_sell_quantity() or money_problem:
+        if sell_amount > Market().min_sell_quantity(product) or money_problem:
             Trader.sell_to_marketplace(product, sell_amount, sell_price)

@@ -47,7 +47,13 @@ class WurzelBot:
         logging.debug('login successfull')
         logging.debug('loading data...')
 
+        old_level = AccountData().level
         AccountData().load_user_data()
+
+        new_level = AccountData().level
+        # in case of level up, recalculate the most profitable product
+        if old_level is not None and old_level < new_level:
+            Market().dispose_profitability()
 
         AccountData().load_stats()
 
@@ -57,8 +63,6 @@ class WurzelBot:
 
         GardenManager().init_gardens()
 
-        # TODO: change this
-        AccountData().account_login = login_data
         Storage().load_storage(efficient_load=False)
         Market().load_wimp_data()
         logging.debug('loading successfull')
@@ -103,7 +107,7 @@ class WurzelBot:
         while True:
             self.check_termination()
 
-            Collector().collect_daily_login_bonus()
+            Collector.collect_daily_login_bonus()
 
             self.check_termination()
 
@@ -130,7 +134,7 @@ class WurzelBot:
 
     def auto_plant(self):
         while True:
-            Collector().collect_daily_login_bonus()
+            Collector.collect_daily_login_bonus()
             Gardener.harvest()
             if GardenManager().has_empty_tiles():
                 Storage().print()

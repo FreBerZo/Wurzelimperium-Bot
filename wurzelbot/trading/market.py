@@ -1,39 +1,47 @@
 import datetime
+import time
 
 from wurzelbot.communication.http_communication import HTTPConnection
 from wurzelbot.gardens.gardens import GardenManager
 from wurzelbot.product.product_data import ProductData
-from wurzelbot.utils import cache
 from wurzelbot.utils.singelton_type import SingletonType
 
 
 class Market(metaclass=SingletonType):
     """Data collection for every place where trading is done"""
+    PRICE_CACHE_TIME = datetime.timedelta(minutes=10).total_seconds()
 
     def __init__(self):
         self.wimp_data = {}
+        # lazy loaded prices; need reloading after one day
+        # {product: (sell_price, up-to-date_until) }
+        self._product_prices = {}
+        self._products_ordered_by_profitability = None
 
     def load_wimp_data(self):
         for garden in GardenManager().gardens:
             self.wimp_data.update({garden.garden_id: HTTPConnection().get_wimps_data(garden.garden_id)})
 
-    # @cache(86400)
+    def dispose_profitability(self):
+        self._products_ordered_by_profitability = None
+
     def get_products_ordered_by_profitability(self):
+        if self._products_ordered_by_profitability is not None:
+            return self._products_ordered_by_profitability
         product_wins = []
         for product in ProductData().get_tradable_plants():
             product_wins.append((product, self.relative_win_for(product)))
 
         return [item[0] for item in sorted(product_wins, key=lambda item: item[1], reverse=True)]
 
-    @cache(86400)
     def min_money(self):
         return GardenManager().get_num_of_plantable_tiles() * self.get_sell_price_for(
             self.get_most_profitable_product())
 
-    @cache(86400)
-    def min_sell_quantity(self):
-        # TODO: how about min sell quantity per product: amount is how much can be farmed in one day
-        return GardenManager().get_num_of_plantable_tiles() * (self.get_most_profitable_product().harvest_quantity - 1)
+    def min_sell_quantity(self, product):
+        return GardenManager().get_num_of_plantable_tiles() * (product.harvest_quantity - 1) \
+            * datetime.timedelta(days=1).total_seconds() \
+            / (product.time_until_harvest * product.size[0] * product.size[1])
 
     def get_most_profitable_product(self):
         return self.get_products_ordered_by_profitability()[0]
@@ -49,12 +57,17 @@ class Market(metaclass=SingletonType):
 
     def get_sell_price_for(self, product):
         if not product.is_tradable:
-            return None
+            raise AttributeError(f'product {product}({product.id}) is not tradeable and doesn\'t have a sell price')
+
+        data = self._product_prices.get(product)
+        if data is not None and time.time() < data[1]:
+            return data[0]
+
         market_price = self.get_cheapest_offer(product)
         official_price = product.price_npc
-        if market_price < official_price:
-            return market_price - 0.01
-        return official_price - 0.01
+        sell_price = min(market_price, official_price) - 0.01
+        self._product_prices.update({product: (sell_price, time.time() + self.PRICE_CACHE_TIME)})
+        return sell_price
 
     def get_cheapest_offer(self, product):
         """
@@ -72,7 +85,6 @@ class Market(metaclass=SingletonType):
         """
 
         if product.is_tradable:
-            # TODO: this should be cached
             # TODO: somehow exclude own offers
             return HTTPConnection().get_offers_from_product(product.id)
         return []

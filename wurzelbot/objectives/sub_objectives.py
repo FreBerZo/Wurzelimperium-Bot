@@ -149,13 +149,13 @@ class FarmMoney(SubObjective):
         if self.prev_plant is not None:
             min_quantity = ProductHelper.min_quantity(self.prev_plant)
             potential_quantity = ProductHelper.potential_quantity(self.prev_plant)
-            if min_quantity + Market().min_sell_quantity() > potential_quantity:
+            if min_quantity + Market().min_sell_quantity(self.prev_plant) > potential_quantity:
                 ReservationManager().free_reservation(self, Resource.PLANT, self.prev_plant)
                 self.prev_plant = None
         if self.prev_fallback_plant is not None:
-            min_quantity = ProductHelper.min_quantity(self.prev_plant)
-            potential_quantity = ProductHelper.potential_quantity(self.prev_plant)
-            if min_quantity + Market().min_sell_quantity() > potential_quantity:
+            min_quantity = ProductHelper.min_quantity(self.prev_fallback_plant)
+            potential_quantity = ProductHelper.potential_quantity(self.prev_fallback_plant)
+            if min_quantity + Market().min_sell_quantity(self.prev_fallback_plant) > potential_quantity:
                 ReservationManager().free_reservation(self, Resource.PLANT, self.prev_fallback_plant)
                 self.prev_fallback_plant = None
 

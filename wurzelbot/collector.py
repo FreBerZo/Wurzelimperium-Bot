@@ -2,11 +2,11 @@ import logging
 
 from wurzelbot.account_data import AccountData
 from wurzelbot.communication.http_communication import HTTPConnection
-from wurzelbot.utils.singelton_type import SingletonType
 
 
-class Collector(metaclass=SingletonType):
-    def collect_daily_login_bonus(self):
+class Collector:
+    @staticmethod
+    def collect_daily_login_bonus():
         logging.info("collecting bonus...")
         collected_bonus = 0
         bonuses = AccountData().daily_login_bonus

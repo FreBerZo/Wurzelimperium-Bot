@@ -16,7 +16,6 @@ class AccountData(metaclass=SingletonType):
     Diese Daten-Klasse enthält alle wichtigen Informationen über den Spieler.
     """
 
-    account_login = None
     user_name = None
     user_id = None
     money = None
