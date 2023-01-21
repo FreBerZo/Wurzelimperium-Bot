@@ -4,6 +4,7 @@ import time
 from wurzelbot.communication.http_communication import HTTPConnection
 from wurzelbot.gardens.gardens import GardenManager
 from wurzelbot.product.product_data import ProductData
+from wurzelbot.account_data import AccountData
 from wurzelbot.utils.singelton_type import SingletonType
 
 
@@ -70,21 +71,17 @@ class Market(metaclass=SingletonType):
         return sell_price
 
     def get_cheapest_offer(self, product):
-        """
-        Ermittelt das günstigste Angebot eines Produkts.
-        """
         offers = self.get_offers_for(product)
 
         if len(offers) > 0:
             return offers[0][1]
         return None
 
-    def get_offers_for(self, product):
-        """
-        Ermittelt alle Angebote eines Produkts.
-        """
+    def get_offers_for(self, product, exclude_own=True):
+        if not product.is_tradable:
+            raise AttributeError(f'product {product}({product.id}) is not tradeable and doesn\'t have offers')
 
-        if product.is_tradable:
-            # TODO: somehow exclude own offers
-            return HTTPConnection().get_offers_from_product(product.id)
-        return []
+        result = HTTPConnection().get_offers_from_product(product.id)
+        if exclude_own:
+            return [item for item in result if item[2] != AccountData.user_name]
+        return result

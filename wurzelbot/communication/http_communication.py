@@ -754,9 +754,9 @@ class HTTPConnection(metaclass=SingletonType):
                     preis = preis.replace('.', '')
                     preis = preis.replace(',', '.')
                     # produkt = table[i][1][0].text
-                    # verkaeufer = table[i][2][0].text
+                    seller_name = table[i][2][0].text
 
-                    listOffers.append([int(anzahl), float(preis)])
+                    listOffers.append((int(anzahl), float(preis), seller_name))
 
                 for element in table[len(table) - 1][0]:
                     if 'weiter' in element.text:

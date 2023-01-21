@@ -45,7 +45,7 @@ class ObjectiveManager(metaclass=SingletonType):
                         needed_products[str(product_id)] -= sent_products[str(product_id)]
             self.objectives.append(BigQuest(2, year_id, current_quest_id, needed_products))
 
-        # city quest starts with level ?
+        # city quest starts with level 5
         # new city quest 48 hours after finishing the previous
         # endless quest starts with level 22
 
