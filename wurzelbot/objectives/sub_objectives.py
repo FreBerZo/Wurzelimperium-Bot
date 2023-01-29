@@ -95,6 +95,7 @@ class FarmMoney(SubObjective):
 
         if Storage().get_stock_from_product(self.plant) < len(GardenManager().get_empty_tiles()):
             # TODO: replace this with provide plant and implement money priority in provide plant
+            # TODO: continue here
             with Reservator(self, Resource.MONEY, -1) as reserved_money_quantity:
                 if reserved_money_quantity > 0:
                     reserved_money_quantity += round(Market().min_money() / 2, 2)
@@ -125,6 +126,7 @@ class FarmMoney(SubObjective):
     def work(self):
         # first method: sell to wimps
         # (this must be first because it doesn't require money to sell so this needs to be preferred)
+        # TODO: continue here
         # TODO: implement this
 
         # second method of money making: normal garden farming and selling to market

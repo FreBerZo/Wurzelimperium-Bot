@@ -42,7 +42,15 @@ class WurzelBot:
 
         login_data = Login(server=self.server, user=self.user_name, password=self.password)
 
-        # TODO: login can fail, because wurzelimperium servers restart daily
+        retries = 3
+        while not HTTPConnection().check_server_status(self.server):
+            retries -= 1
+            if retries < 1:
+                raise ConnectionError("server has internal error")
+            logging.info("server internal error")
+            logging.info("retrying in 30 minutes")
+            time.sleep(1800)
+
         HTTPConnection().log_in(login_data)
         logging.debug('login successfull')
         logging.debug('loading data...')

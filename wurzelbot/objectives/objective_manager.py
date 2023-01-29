@@ -48,6 +48,7 @@ class ObjectiveManager(metaclass=SingletonType):
         # city quest starts with level 5
         # new city quest 48 hours after finishing the previous
         # endless quest starts with level 22
+        # cactus quest/Echino-Questreihe lvl 12 unlocks greenhouse
 
     def get_objective_of_class(self, cls):
         for objective in self.objectives:

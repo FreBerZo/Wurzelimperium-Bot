@@ -24,6 +24,7 @@ from .session import Session
 # Defines
 HTTP_STATE_OK = 200
 HTTP_STATE_FOUND = 302  # moved temporarily
+HTTP_STATE_SERVER_ERROR = 500  # if server is offline
 SERVER_DOMAIN = 'wurzelimperium.de'
 
 
@@ -228,6 +229,12 @@ class HTTPConnection(metaclass=SingletonType):
         cookie = SimpleCookie(response['set-cookie'])
         self.__check_session_deleted(cookie)
         self.logged_in = False
+
+    def check_server_status(self, server):
+        url = 'http://s{}.{}/'.format(server, SERVER_DOMAIN)
+        response, content = self.__webclient.request(url, 'GET', None, None)
+        return response['status'] != str(HTTP_STATE_SERVER_ERROR)
+
 
     # general info
     def __get_info_from_json_content(self, jContent, info):
